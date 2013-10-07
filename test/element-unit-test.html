@@ -1,0 +1,443 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>Element extensions unit test</title>
+  <link type="text/css" rel="stylesheet" href="unittest.css" />
+  <style type="text/css">
+    .xdisplay {
+      display: none;
+    }
+
+    .xvisibility {
+      visibility: hidden;
+    }
+
+    #getScrollParent1 {
+      overflow: visible;
+    }
+
+    #getScrollParent1, #getScrollParent3, #getScrollParent5 {
+      height: 1px;
+    }
+
+    #getScrollParent2, #getScrollParent4, #getScrollParent6 {
+      height: 10px;
+    }
+
+    #moveByR2 {
+      position: absolute;
+      left: -1em;
+      top: -100px;
+    }
+
+    #moveByA2 {
+      position: absolute;
+      left: -1em;
+      top: -100px;
+    }
+  </style>
+  <script type="text/javascript" src="../lib/prototype-1.7.js"></script>
+  <script type="text/javascript" src="../js/prototype.js"></script>
+  <script type="text/javascript" src="../js/misc.js"></script>
+  <script type="text/javascript" src="../js/object.js"></script>
+  <script type="text/javascript" src="../js/element.js"></script>
+  <script type="text/javascript" src="../js/element-style.js"></script>
+  <script type="text/javascript" src="../js/prototype-1.7-ext.js"></script>
+  <script type="text/javascript" src="../lib/unittest.js"></script>
+</head>
+<body>
+<h1>Element extensions unit test</h1>
+<fieldset id="fieldset1" style="visibility:hidden; height:1px; overflow:hidden;">
+  <div id="id1" class="class1">1</div>
+  <div id="id2" class="class2">2</div>
+  <div id="id3" class="class3">3</div>
+  <div id="id4" class="class4">4</div>
+</fieldset>
+<!-- makeClipping/undoClipping -->
+<div id="element_with_visible_overflow" style="overflow:visible;">V</div>
+<div id="element_with_hidden_overflow" style="overflow:hidden;">H</div>
+<div id="element_with_scroll_overflow" style="overflow:scroll;">S</div>
+<div id="element_with_auto_overflow" style="overflow:auto;">A</div>
+<div id="element_with_empty_overflow" style="display:none;">E</div>
+<!-- isVisible -->
+<div id="element_hidden_display" class="xdisplay"></div>
+<div id="element_hidden_visibility" class="xvisibility"></div>
+<div id="element_hidden_inline_display" style="display:none;">
+  <div id="element_hidden_parent_display"></div>
+</div>
+<div id="element_hidden_inline_visibility" style="visibility:hidden;">
+  <div id="element_hidden_parent_visibility"></div>
+</div>
+<!-- getFocusableElements
+<div id="getFocusableElements_root">
+<a class="focusable">link</a>
+<input class="focusable" /><input type="text" class="focusable" /><input type="text" disabled="disabled" /><input type="hidden" />
+</div> -->
+<!-- getScrollParent -->
+<div id="getScrollParent1">
+  <div id="getScrollParent2">M</div>
+</div>
+<div id="getScrollParent3" style="overflow:visible;">
+  <div id="getScrollParent4">M</div>
+</div>
+<div id="getScrollParent5">
+  <div id="getScrollParent6">M</div>
+</div>
+<div id="getScrollParent7" style="overflow:visible; height:1px;">
+  <div id="getScrollParent8">M</div>
+</div>
+<div id="getScrollParent9" style="overflow:auto; height:1px;">
+  <div id="getScrollParent10">M</div>
+</div>
+<div id="getScrollParent11" style="overflow:scroll; height:1px;">
+  <div id="getScrollParent12">M</div>
+</div>
+<div id="moveByS1"></div>
+<div id="moveByR1" style="position:relative;"></div>
+<div id="moveByR2"></div>
+<div id="moveByA1" style="position:absolute; left:50%; top:-1px;"></div>
+<div id="moveByA2"></div>
+<div id="moveByA3" style="position:absolute;"></div>
+<div id="testLoad"></div>
+<!-- Log output -->
+<div id="testlog"></div>
+<br />
+<!-- Tests -->
+<script type="text/javascript">
+/*global $, $$, Element, Test */
+new Test.Unit.Runner({
+  testParseIntStyle: function () {
+    function parseIntStyle(value) {
+      value = parseInt(value || 0, 10);
+      return isNaN(value) ? 0 : value;
+    }
+
+    this.assertEqual(0, parseIntStyle(), "undefined should be parsed as 0");
+    this.assertEqual(0, parseIntStyle(null), "null should be parsed as 0");
+    this.assertEqual(0, parseIntStyle('auto'), "'auto' should be parsed as 0");
+    this.assertEqual(0, parseIntStyle(0), "undefined should be parsed as 0");
+    this.assertEqual(0, parseIntStyle('0px'), "'0px' should be parsed as 0");
+    this.assertEqual(10, parseIntStyle('10px'), "'10px' should be parsed as 10");
+  },
+
+  testElementMakeClipping: function () {
+    var chained = Element.extend(document.createElement('DIV'));
+    this.assertEqual(chained, chained.makeClipping());
+    this.assertEqual(chained, chained.makeClipping());
+    this.assertEqual(chained, chained.makeClipping().makeClipping());
+
+    this.assertEqual(chained, chained.undoClipping());
+    this.assertEqual(chained, chained.undoClipping());
+    this.assertEqual(chained, chained.undoClipping().makeClipping());
+
+    ['hidden', 'visible', 'scroll'].each(function (overflowValue) {
+      var element = $('element_with_' + overflowValue + '_overflow');
+
+      this.assertEqual(overflowValue, element.getStyle('overflow'));
+      element.makeClipping();
+      this.assertEqual('hidden', element.getStyle('overflow'));
+      element.undoClipping();
+      this.assertEqual(overflowValue, element.getStyle('overflow'));
+    }, this);
+
+    var element = $('element_with_auto_overflow');
+    this.assertEqual(null, element.getStyle('overflow'));
+    this.assertEqual("auto", element.style.overflow, "inline style with overflow:auto");
+    element.makeClipping();
+    this.assertEqual('hidden', element.getStyle('overflow'));
+    element.undoClipping();
+    this.assertEqual(null, element.getStyle('overflow'));
+    this.assertEqual("auto", element.style.overflow, "restored inline style with overflow:auto");
+
+    element = $('element_with_empty_overflow');
+    this.assertEqual('visible', element.getStyle('overflow'));
+    this.assertEqual('', element.style.overflow, "inline style without overflow");
+    element.makeClipping();
+    this.assertEqual('hidden', element.getStyle('overflow'));
+    element.undoClipping();
+    this.assertEqual('visible', element.getStyle('overflow'));
+    this.assertEqual('', element.style.overflow, "restored inline style without overflow");
+  },
+
+  testIsVisible: function () {
+    this.assert(!Element.isVisible());
+    this.assert(!Element.isVisible(null));
+    this.assert(!Element.isVisible(undefined));
+    this.assert(!Element.isVisible("non-existent-id"));
+    this.assert(!Element.isVisible(new Element("div")));
+
+    this.assert(Element.isVisible(window), "window should be visible");
+    this.assert(Element.isVisible(document.body), "document.body should be visible");
+    this.assert(Element.isVisible(document.documentElement), "document.documentElement should be visible");
+    this.assert(Element.isVisible("testlog") && $("testlog").isVisible(), "testlog should be visible");
+
+    ["display", "visibility", "inline_display", "inline_visibility", "parent_display", "parent_visibility"].each(function (s) {
+      this.assert(!Element.isVisible("element_hidden_" + s));
+    }, this);
+  },
+
+  testMatch: function () {
+    var e = $("id1");
+    this.assert(e.match(".class1"));
+    this.assert(e.match(".class1[id]"));
+    this.assert(e.match(".class1,.class2,.class3,.class4"), "Match first selector in group of selectors");
+    this.assert(e.match(".class4,.class3,.class2,.class1"), "Match last selector in group of selectors");
+  },
+
+  testInsertInto: function () {
+    this.assert(Object.isFunction(Element.insertInto));
+    var e = new Element("div").insertInto(document.body);
+    //this.assert(Element.lastDescendant(document.body) === e);
+    this.assert(document.body.lastChild === e);
+    e.remove().insertInto(document.body, "top");
+    //this.assert(Element.firstDescendant(document.body) === e);
+    this.assert(document.body.firstChild === e);
+    e.remove().insertInto("id1", "before");
+    this.assert(Element.previous("id1") === e);
+    e.remove().insertInto("id1", "after");
+    this.assert(Element.next("id1") === e);
+    e.remove();
+  },
+
+  testGetOuterHTML: function () {
+    var html = $("id1").getOuterHTML();
+    this.assert((html === '<div class="class1" id="id1">1<\/div>')
+        || (html === '<div id="id1" class="class1">1<\/div>')
+        || (html.strip() === '<DIV id=id1 class=class1>1<\/DIV>'), 'HTML "' + html + '" should be <div class="class1" id="id1">1</div>');
+
+    html = Element.getOuterHTML(new Element("br"));
+    this.assert((/<(br|BR)>/).test(html), 'HTML "' + html + '" should be <br>');
+
+    html = $("element_hidden_parent_visibility").getOuterHTML();
+    this.assertEqual('<div id="element_hidden_parent_visibility"><\/div>', html.strip());
+  },
+
+  testGetScrollParent: function () {
+    function sp(e) {
+      return $(e).getScrollParent();
+    }
+
+    function msg(p, s) {
+      s = s || "scroll parent: ";
+      return s + Object.inspect(p);
+    }
+
+    var p = sp("id1");
+    this.assert(p && p.tagName == "HTML", msg(p, "fieldset>div parent: "));
+
+    p = sp("td1");
+    this.assert(p && (p.id == "div1"), msg(p, "div>table>tr>td parent: "));
+
+    p = sp("getScrollParent2");
+    this.assert(p && p.tagName == "HTML", msg(p));
+
+    p = sp("getScrollParent4");
+    this.assert(p && p.tagName == "HTML", msg(p));
+
+    p = sp("getScrollParent6");
+    this.assert(p && p.tagName == "HTML", msg(p));
+
+    p = sp("getScrollParent8");
+    this.assert(p && p.tagName == "HTML", msg(p));
+
+    p = sp("getScrollParent10");
+    this.assert(p && p.id == "getScrollParent9", msg(p));
+
+    p = sp("getScrollParent12");
+    this.assert(p && p.id == "getScrollParent11", msg(p));
+  },
+
+  testMoveBy: function () {
+    function pos1(e) {
+      return (e.getStyle("left") || "") + " " + (e.getStyle("top") || "");
+    }
+
+    function pos2(e) {
+      return e.style.left + " " + e.style.top;
+    }
+
+    function pos(e) {
+      return (pos1(e) + "; " + pos2(e)).strip();
+    }
+
+    //<div id="moveByS1"></div>
+    var e = $("moveByS1");
+    this.assertEqual(";", pos(e), "static position");
+    e.moveBy(1, 1);
+    this.assertEqual(";", pos(e), "static position + 1");
+
+    //<div id="moveByR1" style="position:relative;"></div>
+    e = $("moveByR1");
+    this.assertEqual(";", pos(e), "default relative position");
+    e.moveBy(1, 1);
+    this.assertEqual(";", pos(e), "default relative position + 1");
+    //this.assertEqual("1px 1px; 1px 1px", pos(e), "default relative position + 1");
+
+    //<div id="moveByR2"></div>
+    e = $("moveByR2");
+    this.assertEqual("-15px -100px;", pos(e), "relative CSS position");
+    e.moveBy(1, 1);
+    this.assertEqual("-14px -99px; -14px -99px", pos(e), "relative CSS position + 1");
+
+    //<div id="moveByA3" style="position:absolute;"></div>
+    e = $("moveByA3");
+    this.assertEqual(";", pos(e), "default absolute position");
+    e.moveBy(1, 1);
+    this.assertEqual(";", pos(e), "default absolute position + 1");
+    //this.assertEqual("1px 1px; 1px 1px", pos(e), "default absolute position + 1");
+
+    //<div id="moveByA1" style="position:absolute; left:50%; top:-1px;"></div>
+    e = $("moveByA1");
+    this.assertEqual("50% -1px; 50% -1px", pos(e), "absolute inline position");
+    e.moveBy(1, 1);
+    this.assertEqual("51% 0px; 51% 0px", pos(e), "absolute inline position + 1");
+
+    //<div id="moveByA2"></div>
+    e = $("moveByA2");
+    this.assertEqual("-15px -100px;", pos(e), "absolute CSS position");
+    e.moveBy(1, 1);
+    this.assertEqual("-14px -99px; -14px -99px", pos(e), "absolute CSS position + 1");
+  },
+
+  testUpdateSmoothly: function () {
+    var div = $("id1");
+    div.updateSmoothly("");
+    this.assertEqual("", div.innerHTML);
+    div.updateSmoothly("1");
+    this.assertEqual("1", div.innerHTML);
+
+    div.updateSmoothly("<b>1<\/b>");
+    this.assertEqual("<b>1<\/b>", div.innerHTML.toLowerCase());
+    this.assertEqual(1, div.childNodes.length);
+
+    div.down("b").writeAttribute("xxx", "xxx");
+    this.assertEqual("<b xxx=\"xxx\">1<\/b>", div.innerHTML.toLowerCase());
+    div.updateSmoothly("<b><i>2<\/i><\/b>");
+    //this.assertEqual("<b xxx=\"xxx\"><i>2</i></b>", div.innerHTML.toLowerCase());
+    //this.assertEqual("xxx", div.down("b").readAttribute("xxx"));
+    this.assertEqual("<b><i>2<\/i><\/b>", div.innerHTML.toLowerCase());
+    this.assertEqual(null, div.down("b").readAttribute("xxx"));
+
+    // custom property yyy="yyy" should stay unchanged
+    div.down("b").yyy = "yyy";
+    this.assertEqual("yyy", div.down("b").yyy, "Custom property");
+    div.updateSmoothly("<b><i>3<\/i><\/b>");
+    //this.assertEqual("<b xxx=\"xxx\"><i>3</i></b>", div.innerHTML.toLowerCase());
+    this.assertEqual("<b><i>3<\/i><\/b>", div.innerHTML.toLowerCase());
+    this.assertEqual("yyy", div.down("b").yyy, "Custom property after update");
+
+    div.update('<a href="#a1" title="title1">&nbsp;<\/a>');
+    this.assertEqual("title1", div.down("a").readAttribute("title"));
+    div.updateSmoothly('<a href="#a2" title="title2" class="class2">&nbsp;<\/a>');
+    this.assertEqual("title2", div.down("a").readAttribute("title"), "Title of element should be updated");
+    this.assertEqual("class2", div.down("a").readAttribute("class"), "Class of element should be updated");
+
+    //div.update('<div class="class1 class2"></div>');
+    var e = div.update('<div class="class1 class2"><\/div>').down();
+    this.assert(e.hasClassName("class1") && e.hasClassName("class2"), "DIV should have both classes, but has " + e.className);
+    //div.updateSmoothly('<div class="class1"></div>');
+    e = div.updateSmoothly('<div class="class1"><\/div>').down();
+    this.assert(e.hasClassName("class1") && !e.hasClassName("class2"), "DIV should have only one class, but has " + e.className);
+    //div.updateSmoothly('<div></div>');
+    e = div.updateSmoothly('<div><\/div>').down();
+    this.assert(!e.hasClassName("class1") && !e.hasClassName("class2"), "DIV should have no classes, but has " + e.className);
+
+    div.update('<table><tbody><tr><td>1</td><td class="class1 class2" style="text-align:right">2</td></tr></tbody></table>');
+    var cell = div.down("td", 1);
+    this.assert(cell.hasClassName("class1") && cell.hasClassName("class2"), "TD should have both classes");
+    div.updateSmoothly('<table><tbody><tr><td>1</td><td class="class1" style="text-align:right">2</td></tr></tbody></table>');
+    cell = div.down("td", 1);
+    this.assert(cell.hasClassName("class1") && !cell.hasClassName("class2"), "TD should have only one class");
+    div.updateSmoothly('<table><tbody><tr><td>1</td><td style="text-align:right">2</td></tr></tbody></table>');
+    cell = div.down("td", 1);
+    this.assert(!cell.hasClassName("class1") && !cell.hasClassName("class2"), "TD classes should be removed");
+
+    div.update('<span id="span1">1</span><span id="span2">2</span><span id="span3">3</span>');
+    div.updateSmoothly('<span id="span1">1</span><span id="span3">3</span>');
+    this.assert(div.down("span", 1).id === "span3");
+    div.updateSmoothly('<span id="span1">1</span><span id="span2">2</span><span id="span3">3</span>');
+    this.assert(div.down("span", 1).id === "span2");
+  },
+
+  testUpdateSmoothlyDeferred: function () {
+    var div = $("id1"), options = {
+      deferred: true
+    };
+    div.update('<table><tbody><tr><td>1</td><td class="class1 class2" style="text-align:right">2</td></tr></tbody></table>');
+    var cell = div.down("td", 1);
+    this.assert(cell.hasClassName("class1") && cell.hasClassName("class2"), "TD should have both classes");
+
+    div.updateSmoothly('<table><tbody><tr><td>1</td><td class="class1" style="text-align:right">2</td></tr></tbody></table>', options);
+    cell = div.down("td", 1);
+    this.assert(cell.hasClassName("class1") && cell.hasClassName("class2"), "TD classes should change only after delay");
+
+    this.wait(100, function () {
+      cell = div.down("td", 1);
+      this.assert(cell.hasClassName("class1") && !cell.hasClassName("class2"), "TD should have only one class");
+
+      div.updateSmoothly('<table><tbody><tr><td>1</td><td style="text-align:right">2</td></tr></tbody></table>', options);
+      cell = div.down("td", 1);
+      this.assert(cell.hasClassName("class1") && !cell.hasClassName("class2"), "TD classes should change only after delay");
+
+      this.wait(100, function () {
+        cell = div.down("td", 1);
+        this.assert(!cell.hasClassName("class1") && !cell.hasClassName("class2"), "TD classes should be removed");
+      });
+    });
+  },
+
+  testLoad: function () {
+    this.assertFunction(Element.load);
+    var element = $("testLoad");
+    this.assertFunction(element.load);
+    this.assertEqual("", element.innerHTML)
+    element.load("element-load-content.html", {
+      method: "get"
+    });
+    this.wait(100, function () {
+      this.assertEqual("loaded content", element.innerHTML)
+    });
+  },
+
+  testAttr: function () {
+    function formatStyleString(style) {
+      style = style.gsub(" ", "").split(";").without("").sort().join(";");
+      return Prototype.Browser.IE ? style.toLowerCase() : style;
+    }
+
+    this.assertFunction(Element.attr);
+
+    this.assertEqual("Scroll parent test", $$("#div1 table").first().attr("summary"));
+
+    var e = $("fieldset1"), v = "title value";
+    this.assertEqual("fieldset1", e.attr("id"));
+    this.assertEqual(formatStyleString("visibility: hidden; height: 1px; overflow: hidden;"),
+        formatStyleString(e.attr("style")));
+    this.assertEqual(e, e.attr("title", v), "Chaining");
+    this.assertEqual(v, e.attr("title"));
+  }
+});
+</script>
+<div id="div1" style="height:1em;overflow:auto;">
+  <table summary="Scroll parent test">
+    <tr>
+      <td id="td1">1</td>
+    </tr>
+    <tr>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>4</td>
+    </tr>
+    <tr>
+      <td>5</td>
+    </tr>
+  </table>
+</div>
+</body>
+</html>

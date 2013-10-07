@@ -1,0 +1,132 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Element extensions unit test</title>
+    <link type="text/css" rel="stylesheet" href="unittest.css" />
+    <style type="text/css">
+      .xdisplay {
+        display: none;
+      }
+
+      .xvisibility {
+        visibility: hidden;
+      }
+
+      #getScrollParent1 {
+        overflow: visible;
+      }
+
+      #getScrollParent1, #getScrollParent3, #getScrollParent5 {
+        height: 1px;
+      }
+
+      #getScrollParent2, #getScrollParent4, #getScrollParent6 {
+        height: 10px;
+      }
+    </style>
+    <script type="text/javascript" src="../lib/prototype-1.7.js"></script>
+    <script type="text/javascript" src="../js/element-navigation.js"></script>
+    <script type="text/javascript" src="../js/prototype-1.7-ext.js"></script>
+    <script type="text/javascript" src="../lib/unittest.js"></script>
+  </head>
+  <body>
+    <h1>Element extensions unit test</h1>
+    <fieldset id="fieldset1" style="visibility:hidden; height:1px; overflow:hidden;">
+      <div id="id1" class="class1">1</div>
+      <div id="id2" class="class2">2</div>
+      <div id="id3" class="class3">3</div>
+      <div id="id4" class="class4">4</div>
+    </fieldset>
+    <!-- getFocusableElements -->
+    <div id="getFocusableElements_root">
+      <input type="text" disabled="disabled" />
+      <a id="focusable2" class="focusable">link</a>
+      <input id="focusable1" class="focusable" autofocus="autofocus" />
+      <input type="text" class="focusable" />
+      <input type="text" disabled="disabled" /><input type="hidden" />
+    </div>
+    <div id="getSuccessfulElements_root">
+      <input name="input" class="successful" /><input/><input name="input" disabled="disabled" />
+      <br/>
+      <select name="select" class="successful"><option>&#160;</option></select>
+      <select><option>&#160;</option></select>
+      <select name="select" disabled="disabled"><option>&#160;</option></select>
+      <button name="button" class="successful">B1</button>
+      <button>B1</button>
+      <button name="button" disabled="disabled">B1</button>
+      <textarea cols="1" rows="1" name="text" class="successful">
+      </textarea>
+      <textarea cols="1" rows="1">
+      </textarea>
+      <textarea cols="1" rows="1" name="text" disabled="disabled">
+      </textarea>
+    </div>
+    <!-- Log output -->
+    <div id="testlog"> </div>
+    <br/>
+    <!-- Tests -->
+    <script type="text/javascript">
+      new Test.Unit.Runner({
+        testPrevious: function() {
+          var src = $("id4");
+          this.assertUndefined(src.previous(6));
+          this.assertElementId("id3", src.previous());
+          this.assertElementId("id3", src.previous(0));
+          this.assertElementId("id3", src.previous(".class3"));
+          this.assertElementId("id3", src.previous(".class3[id]"));
+          this.assertElementId("id3", src.previous(".class1,.class2,.class3,.class4"));
+          this.assertElementId("id3", src.previous(".class4,.class3,.class2,.class1"));
+        },
+
+        testNext: function() {
+          var src = $("id1");
+          this.assertUndefined(src.next(3));
+          this.assertElementId("id2", src.next());
+          this.assertElementId("id2", src.next(0));
+          this.assertElementId("id2", src.next(".class2"));
+          this.assertElementId("id2", src.next(".class2[id]"));
+          this.assertElementId("id2", src.next(".class1,.class2,.class3,.class4"));
+          this.assertElementId("id2", src.next(".class4,.class3,.class2,.class1"));
+        },
+
+        testIsFocusable: function() {
+          this.assertFalse(Element.isFocusable(new Element("div")));
+
+          this.assertTrue(Element.isFocusable(new Element("a")));
+
+          this.assertTrue(Element.isFocusable(new Element("input")));
+          this.assertTrue(Element.isFocusable(new Element("select")));
+          this.assertTrue(Element.isFocusable(new Element("textarea")));
+          this.assertTrue(Element.isFocusable(new Element("button")));
+
+          this.assertFalse(Element.isFocusable(new Element("input", {type: "hidden"})));
+          this.assertFalse(Element.isFocusable(new Element("input", {disabled: "disabled"})));
+        },
+
+        testGetFocusableElements: function() {
+          var elements = $("getFocusableElements_root").getFocusableElements();
+          this.assertEqual(3, elements.length);
+          elements.each(this.assertClassName.curry("focusable"), this);
+        },
+
+        testGetFirstFocusableElement: function() {
+          var root = $("getFocusableElements_root"), first;
+
+          first = root.getFirstFocusableElement();
+          this.assertElementId("focusable1", first);
+
+          $("focusable1").removeAttribute("autofocus");
+          first = root.getFirstFocusableElement();
+          this.assertElementId("focusable2", first);
+        },
+
+        testGetSuccessfulElements: function() {
+          var elements = $("getSuccessfulElements_root").getSuccessfulElements();
+          this.assertEqual(4, elements.length);
+          elements.each(this.assertClassName.curry("successful"), this);
+        }
+      });
+    </script>
+  </body>
+</html>

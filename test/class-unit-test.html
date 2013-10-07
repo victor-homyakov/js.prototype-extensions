@@ -1,0 +1,358 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>Class extensions unit test</title>
+  <link type="text/css" rel="stylesheet" href="unittest.css" />
+  <style type="text/css">
+    #list {
+      height: 10em;
+      overflow: auto;
+    }
+  </style>
+  <script type="text/javascript" src="../lib/prototype-1.7.js"></script>
+  <script type="text/javascript" src="../js/class.js"></script>
+  <script type="text/javascript" src="../lib/unittest.js"></script>
+</head>
+<body>
+<h1>Class extensions unit test</h1>
+
+<div id="testlog"></div>
+<ul id="list"></ul>
+
+<script type="text/javascript">
+new Test.Unit.Runner({
+  testMethods: function () {
+    this.assertFunction(Class.Methods.extend);
+    this.assertFunction(Class.Methods.include);
+    this.assertFunction(Class.create);
+  },
+
+  testAncestors: function () {
+    var C1 = Class.create();
+    this.assert(Object.isArray(C1.ancestors));
+    this.assertEqual(0, C1.ancestors.length);
+
+    var C2 = Class.create(C1);
+    this.assert(Object.isArray(C2.ancestors));
+    this.assertEqual(1, C2.ancestors.length);
+    this.assertEqual(C1, C2.ancestors[0]);
+  },
+
+  testPrebind: function () {
+    var C1 = Class.create({
+      prebind: "should not fail",
+      method1: function () {
+        return this;
+      }
+    }), c1 = new C1(), m1 = c1.method1;
+    this.assertEqual(c1, c1.method1());
+    this.assertEqual(window, m1(), "Unbound method");
+
+    var C2 = Class.create(C1, {
+      //prebind: ["non-existent", "method1", "method2"], will throw Error
+      prebind: ["method1", "method2"],
+      method2: function () {
+        return this;
+      }
+    }), c2 = new C2(), m21 = c2.method1, m22 = c2.method2;
+    this.assertEqual(c2, c2.method1());
+    this.assertEqual(c2, m21());
+    this.assertEqual(c2, c2.method2());
+    this.assertEqual(c2, m22());
+  },
+
+  testClearExtendedModuleNames: function () {
+    var clear = Class.Methods.clearModuleNames, names;
+    this.assert(Object.isArray(clear({}, true)));
+
+    var module = {
+      f1: 0,
+      selfExtended: 0,
+      selfIncluded: 0,
+      extend: 0,
+      include: 0,
+      prototype: 0,
+      superclass: 0,
+      subclasses: 0,
+      ancestors: 0,
+      constructor: 0,
+      toString: 0,
+      valueOf: 0
+    };
+
+    names = clear(module, true);
+    this.assert(Object.isArray(names));
+    names = names.sort().uniq(true);
+    this.assertEqual(4, names.length, "extend 4 names");
+    this.assertEqual("constructor f1 toString valueOf", names.join(" "), "include 4 names");
+  },
+
+  testClearIncludedModuleNames: function () {
+    var clear = Class.Methods.clearModuleNames, names;
+    this.assert(Object.isArray(clear({}, false)));
+
+    var module = {
+      f1: 0,
+      selfExtended: 0,
+      selfIncluded: 0,
+      extend: 0,
+      include: 0,
+      prototype: 0,
+      superclass: 0,
+      subclasses: 0,
+      ancestors: 0,
+      constructor: 0,
+      toString: 0,
+      valueOf: 0
+    };
+
+    names = clear(module, false);
+    this.assert(Object.isArray(names));
+    names = names.sort().uniq(true);
+    this.assertEqual(7, names.length, "include 7 names");
+    this.assertEqual("ancestors f1 prototype subclasses superclass toString valueOf", names.join(" "), "include 7 names");
+  },
+
+  testExtend: function () {
+    var C1 = Class.create({
+      extend: [
+        {
+          staticConst: "const",
+          staticFunction: function () {
+            return this.staticConst;
+          },
+          extend: "should not override existing extend",
+          include: "should not override existing include",
+          toString: function () {
+            return "extended toString";
+          },
+          valueOf: function () {
+            return "extended valueOf";
+          }
+        }
+      ]
+    });
+    this.assertEqual("const", C1.staticConst);
+    this.assert(Object.isFunction(C1.staticFunction));
+    this.assertEqual("const", C1.staticFunction());
+    this.assert(Object.isFunction(C1.include), "C1.include");
+    this.assert(Object.isFunction(C1.extend), "C1.extend");
+    this.assertEqual("extended toString", C1.toString(), "C1.toString");
+    this.assertEqual("extended valueOf", C1.valueOf(), "C1.valueOf");
+
+    var c1 = new C1();
+    this.assertUndefined(c1.staticConst, "C1#staticConst");
+    this.assertUndefined(c1.staticFunction, "C1#staticFunction");
+    this.assertUndefined(c1.extend, "C1#extend");
+    this.assertUndefined(c1.include, "C1#include");
+  },
+
+  testSelfExtended: function () {
+    var extended = 0, module = {
+      selfExtended: function () {
+        extended++;
+      }
+    }, C1 = Class.create({
+      extend: [module]
+    });
+    this.assertEqual(1, extended);
+
+    var C2 = Class.create({
+      extend: [C1]
+    });
+    this.assertEqual(1, extended);
+
+    var C3 = Class.create({
+      extend: [module, C1, C2]
+    });
+    this.assertEqual(2, extended);
+  },
+
+  testInclude: function () {
+    var C1 = Class.create({
+      include: [
+        {
+          aConst: "const",
+          aFunction: function () {
+            return this.aConst;
+          },
+          method1: function () {
+            return "included method";
+          },
+          extend: "should not override existing extend",
+          include: "should not override existing include",
+          toString: function () {
+            return "included toString";
+          },
+          valueOf: function () {
+            return "included valueOf";
+          }
+        }
+      ],
+      method1: function () {
+        return "instance method";
+      }
+    });
+    this.assertEqual("const", C1.prototype.aConst);
+    this.assert(Object.isFunction(C1.prototype.aFunction));
+    this.assertUndefined(C1.prototype.include, "C1.include");
+    this.assertUndefined(C1.prototype.extend, "C1.extend");
+
+    var c1 = new C1();
+    this.assertEqual("const", c1.aConst);
+    this.assert(Object.isFunction(c1.aFunction));
+    this.assertEqual("const", c1.aFunction());
+    this.assertUndefined(c1.include, "C1#include");
+    this.assertUndefined(c1.extend, "C1#extend");
+    this.assertEqual("instance method", c1.method1());
+    this.assertEqual("included toString", c1.toString(), "C1#toString");
+    this.assertEqual("included valueOf", c1.valueOf(), "C1#valueOf");
+  },
+
+  testSelfIncluded: function () {
+    var included = 0, module = {
+      selfIncluded: function () {
+        included++;
+      }
+    }, C1 = Class.create({
+      include: [module]
+    });
+    this.assertEqual(1, included);
+
+    var C2 = Class.create({
+      include: [C1]
+    });
+    this.assertEqual(1, included);
+
+    var C3 = Class.create({
+      include: [module, C1, C2]
+    });
+    this.assertEqual(2, included);
+  },
+
+  testIncludeSuper: function () {
+    var C1 = Class.create({
+      include: [
+        {
+          method1: function () {
+          },
+          method2: function () {
+            return "module";
+          }
+        }
+      ],
+      method1: function ($super) {
+        return $super;
+      },
+      method2: function ($super) {
+        return $super() + " included";
+      }
+    });
+    var c1 = new C1();
+    this.assert(Object.isFunction(c1.method1()), "$super should point to included method");
+    this.assertEqual("module included", c1.method2());
+
+    var C2 = Class.create(C1, {
+      method1: function ($super) {
+        return $super;
+      },
+      method2: function ($super) {
+        return $super() + " inherited";
+      }
+    });
+    var c2 = new C2();
+    this.assert(Object.isFunction(c2.method1()), "$super should point to inherited method");
+    this.assertEqual("module included inherited", c2.method2());
+  },
+
+  testRuntimeSubclass: function () {
+    var C1 = Class.create({
+      method1: function () {
+        return "C1";
+      }
+    }), C2 = Class.create(C1, {
+      method2: function () {
+        return "C2";
+      },
+      createSubclass: function (module) {
+        return Class.create(this.constructor, module);
+      }
+    });
+    var o2 = new C2(), C3 = o2.createSubclass({
+      method3: function () {
+        return "subclass";
+      }
+    }), o3 = new C3();
+    this.assertInstanceOf(C1, o2, "o2 instanceOf C1");
+    this.assertInstanceOf(C2, o2, "o2 instanceOf C2");
+    this.assertInstanceOf(C1, o3, "o3 instanceOf C1");
+    this.assertInstanceOf(C2, o3, "o3 instanceOf C2");
+    this.assert(Object.isFunction(o3.method1), "o3.method1");
+    this.assert(Object.isFunction(o3.method2), "o3.method2");
+    this.assert(Object.isFunction(o3.method3), "o3.method3");
+  },
+
+  testClassMethods: function () {
+    function assertClassMethods(object) {
+      var module = object.value, name = object.key;
+      this.assertFunction(module.extend, name + ".extend()");
+      this.assertFunction(module.include, name + ".include()");
+      this.assertFunction(module.addMethods, name + ".addMethods()");
+    }
+
+    var rootClasses = $H({
+      "Ajax.Base": Ajax.Base,
+      "Ajax.Response": Ajax.Response
+    });
+    rootClasses.each(assertClassMethods, this);
+    var childClasses = $H({
+      "Ajax.Request": Ajax.Request,
+      "Ajax.Updater": Ajax.Updater
+    });
+    childClasses.each(assertClassMethods, this);
+  }
+});
+
+function listClasses(object, namespace) {
+  //$("list").insert("<li>" + object + " : " + namespace + "</li>");
+  listClasses.list.push(object);
+  for (var p in object) {
+    var c = object[p];
+    //if ((c + '') === "[object Storage]") {continue;}
+    try {
+      if (Object.isElement(c) || listClasses.list.indexOf(c) >= 0) {
+        continue;
+      }
+    } catch (e) {
+      continue; // weird IE objects
+    }
+    if (Object.isFunction(c) && c.prototype && c.prototype.initialize
+        && !Object.isUndefined(c.superclass) && !Object.isUndefined(c.subclasses)) {
+      if (window.console) {
+        window.console.log(namespace + p, c);
+      }
+      $("list").insert("<li>" + namespace + p + ": " + c + "</li>");
+    } else if (c && typeof c === "object") {
+      // Chrome object loop
+      if (window.MimeType && c instanceof window.MimeType) {
+        continue;
+      }
+      // IE objects: frames.external, window.navigator.mimeTypes, etc.
+      if (/^(external|frames|mimeTypes|plugins)$/.test(p) && !(c instanceof Object)) {
+        continue;
+      }
+      //console.log("Object", namespace + p, c);
+      //$("list").insert("<li>" + object + " - " + c + " :: " + namespace + " . " + p + "</li>");
+      listClasses(c, namespace + p + ".");
+    }
+  }
+}
+
+listClasses.list = [];
+listClasses(window, "");
+listClasses.list = []; // cleanup
+</script>
+</body>
+</html>
