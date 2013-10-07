@@ -1,0 +1,2 @@
+/*global Element */
+Element.addMethods();
