@@ -1,0 +1,225 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>Event extensions unit test</title>
+  <link type="text/css" rel="stylesheet" href="unittest.css" />
+  <script type="text/javascript" src="../lib/prototype-1.7.js"></script>
+  <script type="text/javascript" src="../js/event.js"></script>
+  <script type="text/javascript" src="../js/prototype-1.7-ext.js"></script>
+  <script type="text/javascript" src="../lib/unittest.js"></script>
+</head>
+<body>
+<h1>Event extensions unit test</h1>
+<!-- Log output -->
+<div id="testlog">
+  &nbsp;
+</div>
+<br />
+
+<form action="" id="form" target="_blank">
+  <input type="text" value="text" id="text1" />
+  <input type="submit" value="Submit" id="submit1" />
+  <br />
+  <textarea cols="40" rows="2" id="text2">textarea</textarea>
+</form>
+
+<button id="alert1">Button1</button>
+<button id="alert2">Button2</button>
+<a id="alert3">Link</a>
+<a id="alert4">Link</a>
+
+<!-- Tests -->
+<script type="text/javascript">
+  new Test.Unit.Runner({
+    setup: function () {
+      $("text1").setValue("text");
+    },
+
+    teardown: function () {
+      $("text1").stopObserving();
+    },
+
+    testObserveOnce: function () {
+      var text1 = $("text1"), clicked = 0, blurred = 0;
+      text1.observeOnce("click", function () {
+        clicked++;
+      });
+      text1.observeOnce("blur", function () {
+        blurred++;
+      });
+
+      text1.simulate("click").simulate("blur");
+      this.assertEqual(1, clicked);
+      this.assertEqual(1, blurred);
+
+      text1.simulate("click").simulate("blur");
+      this.assertEqual(1, clicked);
+      this.assertEqual(1, blurred);
+    },
+
+    testIsSupported: function () {
+      this.assertTrue(Event.isSupported("click")); // test click on default element (div)
+      this.assertTrue(Event.isSupported("submit")); // test submit on form element
+      this.assertTrue(Event.isSupported("submit"), $("form")); // test submit on form element
+      this.assertTrue(Event.isSupported("click", "a")); // test click on anchor element
+      this.assertTrue(Event.isSupported("unload", window)); // test window unload event
+    },
+
+    testSimulate: function () {
+      this.assertFunction(Event.simulate);
+      this.assertFunction(Element.simulate);
+      this.assertFunction($("text1").simulate);
+    },
+
+    testSimulateBadEvent: function () {
+      try {
+        $("text1").simulate("xxx");
+        this.fail("Should throw SyntaxError");
+      } catch (e) {
+        this.assertInstanceOf(SyntaxError, e, "Should throw SyntaxError");
+      }
+    },
+
+    testSimulateThis: function () {
+      var text1 = $("text1"), context;
+      text1.onchange = function () {
+        context = this;
+      };
+
+      text1.simulate("change");
+      this.assertEqual(text1, context, "this in onchange should point to element");
+    },
+
+    testSimulateHTMLEvents: function () {
+      //load|unload|abort|error|select|input|change|submit|reset|focus|blur|resize|scroll
+      var text1 = $("text1"), change = 0, blur = 0, input = 0;
+      text1.onchange = function () {
+        change++;
+      };
+      text1.onblur = function () {
+        blur++;
+      };
+      text1.oninput = function () {
+        input++;
+      };
+
+      text1.simulate("change").simulate("blur");
+      this.assertEqual(1, change, "onchange");
+      this.assertEqual(1, blur, "onblur");
+
+      if (Event.isSupported("input")) {
+        text1.simulate("input");
+        this.assertEqual(1, input, "oninput");
+      }
+    },
+
+    testSimulateMouseEvents: function () {
+      //click|dblclick|mouse(?:down|up|over|move|out)
+      var text1 = $("text1"), inlineClick = 0, inlineDblclick = 0, observeClick = 0, observeDblclick = 0;
+      text1.onclick = function () {
+        inlineClick++;
+      };
+      text1.ondblclick = function () {
+        inlineDblclick++;
+      };
+      text1.observe("click", function () {
+        observeClick++;
+      });
+      text1.observe("dblclick", function () {
+        observeDblclick++;
+      });
+
+      text1.simulate("click");
+      //this.wait(100, function() {
+      text1.simulate("dblclick");
+      this.assertEqual(1, inlineClick, "onclick");
+      this.assertEqual(1, inlineDblclick, "ondblclick");
+      this.assertEqual(1, observeClick, "observe click");
+      this.assertEqual(1, observeDblclick, "observe dblclick");
+      //});
+    },
+
+    /*testSimulateKeyEvents: function () {
+     //keydown|keypress|keyup
+     var text1 = $("text1"), code = '1'.charCodeAt(0);
+     this.assertEqual("text", text1.value);
+     this.assertEqual(Event.KEY_1, code, "Character code");
+     text1.focus();
+
+     text1.simulate("keydown", {
+     charCode: 0,
+     keyCode: code
+     });
+
+     text1.simulate("keypress", {
+     charCode: code,
+     keyCode: code
+     });
+
+     text1.simulate("keyup", {
+     charCode: 0,
+     keyCode: code
+     });
+
+     this.assertEqual("text1", text1.value, "Test will fail in Opera and Chrome");
+     },*/
+
+    testSubmitBubbling: function () {
+      var onSubmitFired = 0, observeSubmitFired = 0;
+      var handler1 = document.on("submit", function (event, element) {
+        event.stop();
+        onSubmitFired++;
+      });
+      var handler2 = function (event) {
+        event.stop();
+        observeSubmitFired++;
+      };
+      document.observe("submit", handler2);
+
+      var submit = $("submit1");
+      submit.focus(); // let IE discover form and prepare submit emulation
+      submit.click();
+
+      this.assertEqual(1, onSubmitFired, "Submit event caught by document.on()");
+      this.assertEqual(1, observeSubmitFired, "Submit event caught by document.observe()");
+
+      handler1.stop();
+      document.stopObserving(handler2);
+    },
+
+    testEventClick: function () {
+      var count = {
+        alert1: 0,
+        alert2: 0,
+        alert3: 0,
+        alert4: 0
+      };
+
+      function counter(event) {
+        if (event) {
+          event.stop();
+        }
+        count[this.id]++;
+      }
+
+
+      $("alert1").onclick = counter;
+      $("alert3").onclick = counter;
+      $("alert2", "alert4").invoke("observe", "click", counter);
+
+      Element.click('alert1');
+      Element.click('alert2');
+      Element.click('alert3');
+      Element.click('alert4');
+
+      this.assertEqual(1, count.alert1, "Inline click event on button fired");
+      this.assertEqual(1, count.alert2, "Click event on button fired");
+      this.assertEqual(1, count.alert3, "Inline click event on link fired");
+      this.assertEqual(1, count.alert4, "Click event on link fired");
+    }
+  });
+</script>
+</body>
+</html>

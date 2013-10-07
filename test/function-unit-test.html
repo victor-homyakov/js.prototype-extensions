@@ -1,0 +1,114 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>Function extensions unit test</title>
+  <link type="text/css" rel="stylesheet" href="unittest.css" />
+  <script type="text/javascript" src="../lib/prototype-1.7.js"></script>
+  <script type="text/javascript" src="../js/prototype.js"></script>
+  <script type="text/javascript" src="../js/function.js"></script>
+  <script type="text/javascript" src="../js/misc.js"></script>
+  <script type="text/javascript" src="../lib/unittest.js"></script>
+</head>
+<body>
+  <h1>Function extensions unit test</h1>
+  <!-- Tests -->
+  <script type="text/javascript">
+    new Test.Unit.Runner({
+      testPeriodical: function() {
+        var count = 0, result = false, fn = function(value) {
+          result = value;
+          count++;
+        };
+        var fn2 = fn.periodical(0.3, true);
+        this.assertInstanceOf(Object, fn2);
+        this.assertInstanceOf(Function, fn2.stop);
+        this.wait(1000, function() {
+          fn2.stop();
+          this.assert(result, "Should be true");
+          this.assert(count === 3, "Should be 3, but is " + count);
+        });
+      },
+
+      testChain: function() {
+        var f1executed = false, f2executed = false;
+        var f1 = function(value) {
+          f1executed = value;
+        }, f2 = function() {
+          f2executed = true;
+        };
+        f1.chain(f2)(true);
+        this.assert(f1executed);
+        this.assert(f2executed);
+      },
+
+      testDebounce: function() {
+        this.assertFunction(Function.prototype.debounce);
+        var counter = 0, fn = function() {
+          counter++;
+        }, debounced = fn.debounce();
+        this.assertFunction(debounced);
+        for (var i = 0; i < 10; i++) {
+          debounced();
+        }
+        this.assertEqual(0, counter, "Should not execute");
+        this.wait(500, function() {
+          this.assertEqual(1, counter, "Should execute once after end");
+        });
+      },
+
+      testDebounceAsap: function() {
+        var counter = 0, fn = function() {
+          counter++;
+        }, debounced = fn.debounce(0.1, true);
+        this.assertFunction(debounced);
+        for (var i = 0; i < 10; i++) {
+          debounced();
+        }
+        this.assertEqual(1, counter, "Should execute once at start");
+        this.wait(500, function() {
+          this.assertEqual(1, counter, "Should execute only once");
+        });
+      },
+
+      testDebounceContext: function() {
+        var context1, context2;
+        var obj = {
+          name: "Test object",
+          f1: function() {
+            context1 = this;
+          }.debounce(0.1, true),
+          f2: function() {
+            context2 = this;
+          }
+        };
+        obj.f1();
+        this.assert(context1, "context1");
+        this.assertEqual("Test object", context1.name, "context1");
+
+        obj.f3 = obj.f2.debounce(0.1, true);
+        obj.f3();
+        this.assert(context2, "context2");
+        this.assertEqual("Test object", context2.name, "context2");
+      },
+
+      testDefer: function() {
+        var context, counter = 0;
+        var obj = {
+          name: "Test object",
+          fn: function() {
+            context = this;
+            counter++;
+          }
+        };
+        obj.fn.bind(obj).defer();
+        this.wait(100, function() {
+          this.assert(context, "context");
+          this.assertEqual("Test object", context.name, "context");
+          this.assertEqual(1, counter, "Should execute only once");
+        });
+      }
+    });
+  </script>
+</body>
+</html>

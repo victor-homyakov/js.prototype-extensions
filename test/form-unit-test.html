@@ -1,0 +1,292 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>Form and Field extensions unit test</title>
+  <link type="text/css" rel="stylesheet" href="unittest.css" />
+  <script type="text/javascript" src="../lib/prototype-1.7.js"></script>
+  <script type="text/javascript" src="../js/object.js"></script>
+  <script type="text/javascript" src="../js/form.js"></script>
+  <script type="text/javascript" src="../js/prototype-1.7-ext.js"></script>
+  <script type="text/javascript" src="../lib/unittest.js"></script>
+</head>
+<body>
+  <h1>Form and Field extensions unit test</h1>
+  <!-- Log output -->
+  <div id="testlog">
+    &nbsp;
+  </div>
+  <br/>
+  <form id="form" action="">
+    <div>
+      <input class="clearValue" value="default input" />
+      <br/>
+      <input class="clearValue" type="password" value="password" />
+      <br/>
+      <input class="clearValue" type="text" value="text" />
+      <br/>
+      <textarea class="clearValue" cols="40" rows="2">textarea</textarea>
+      <br/>
+      <input class="clearValue" type="hidden" value="hidden" />
+    </div>
+    <div>
+      <input class="clearChecked" type="checkbox" value="true" checked="checked" />
+      <input class="clearChecked" type="checkbox" value="true" />
+      <br/>
+      <input class="clearChecked" type="radio" value="radio1" name="radio" checked="checked" />
+      <input class="clearChecked" type="radio" value="radio2" name="radio" />
+    </div>
+    <div>
+      <input class="clearNothing" type="image" value="image" />
+      <br/>
+      <input class="clearNothing enabled" type="button" value="button" />
+      <input class="clearNothing enabled" type="reset" value="reset" />
+      <input class="clearNothing enabled" type="submit" value="submit" />
+      <br/>
+      <input class="clearNothing disabled" type="button" value="button" disabled="disabled" />
+      <input class="clearNothing disabled" type="reset" value="reset" disabled="disabled" />
+      <input class="clearNothing disabled" type="submit" value="submit" disabled="disabled" />
+      <br/>
+      <button class="enabled">button</button>
+      <button class="enabled" type="button">button</button>
+      <button class="enabled" type="reset">reset</button>
+      <button class="enabled" type="submit">submit</button>
+      <button class="disabled" disabled="disabled">button</button>
+      <button class="disabled" type="button" disabled="disabled">button</button>
+      <button class="disabled" type="reset" disabled="disabled">reset</button>
+      <button class="disabled" type="submit" disabled="disabled">submit</button>
+    </div>
+  </form>
+  <form id="form1" action="" onsubmit="return false;">
+    <input type="button" name="button" value="button" />
+    <input type="checkbox" name="checkbox" value="checkbox" checked="checked" />
+    <input type="password" name="password" value="password" />
+    <input type="radio" name="radio" value="radio1" checked="checked" />
+    <input type="radio" name="radio" value="radio2" />
+    <input type="text" name="text" value="text" />
+    <textarea id="textarea1" name="textarea" cols="10" rows="1">textarea</textarea>
+    <select name="select">
+      <option value="1">one</option>
+      <option value="2">two</option>
+      <option value="3" selected="selected">three</option>
+    </select>
+  </form>
+  <form id="form2" action="">
+    <fieldset>
+      <input id="submit1" type="submit" name="submit1" value="submit1" />
+      <button id="submit2" type="submit" name="submit2" value="submit2">submit2</button>
+      <button id="submit3" name="submit3" value="submit3">submit3</button>
+      <br/>
+      <input id="submit4" type="image" name="image" style="width:100px; height:100px; border:1px dotted green;" />
+    </fieldset>
+  </form>
+  <!-- Tests -->
+  <script type="text/javascript">
+    function inspect(e) {
+      return $(e).inspect().replace('>', " type='" + e.type + "' value='" + e.value + "' checked='" + e.checked + "' disabled='" + e.disabled + "'>");
+    }
+
+    var FORM1 = 'button=button&checkbox=checkbox&password=password&radio=radio1&text=text&textarea=textarea&select=3';
+    var FORM2 = 'button=button&checkbox=checkbox&password=&radio=radio1&text=text+1&textarea=text%0D%0Atext+text%0D%0Atext&select=3';
+
+    new Test.Unit.Runner({
+      setup: function() {
+        $("form").reset();
+        $("form1").reset();
+        $("form2").reset();
+      },
+
+      testFieldClear: function() {
+        var selector = "input,textarea,select", inputs = $("form").select(selector), i, v, c, n;
+        this.assertEqual(16, inputs.length, "inputs");
+
+        v = $$(".clearValue");
+        this.assertEqual(5, v.length, "clearValue");
+        c = $$(".clearChecked");
+        this.assertEqual(4, c.length, "clearChecked");
+        n = $$(".clearNothing");
+        this.assertEqual(7, n.length, "clearNothing");
+
+        this.assertIdentical("true", $F(c[0]), "Checked: " + inspect(c[0]));
+        this.assertIdentical(null, $F(c[1]), "Checked: " + inspect(c[1]));
+        this.assertIdentical("radio1", $F(c[2]), "Checked: " + inspect(c[2]));
+        this.assertIdentical(null, $F(c[3]), "Checked: " + inspect(c[3]));
+
+        inputs.invoke("clear");
+
+        for ( i = 0; i < v.length; ++i) {
+          this.assertIdentical("", $F(v[i]), "Empty value: " + inspect(v[i]));
+        }
+
+        for ( i = 0; i < c.length; ++i) {
+          this.assertIdentical(null, $F(c[i]), "Unchecked: " + inspect(c[i]));
+          this.assertIdentical(false, c[i].checked, "Unchecked: " + inspect(c[i]));
+        }
+
+        for ( i = 0; i < n.length; ++i) {
+          this.assertIdentical(n[i].type, n[i].value, "Saved value: " + inspect(n[i]));
+        }
+      },
+
+      testFieldClear2: function() {
+        var f = $("form1");
+        f.cleanWhitespace();
+        this.assertNotNull(f);
+
+        this.assertEqual("button", f.childNodes[0].value, "Before");
+        this.assertEqual("checkbox", f.childNodes[1].value, "Before");
+        this.assertEqual(true, f.childNodes[1].checked, "Checkbox is initially checked");
+        this.assertEqual("password", f.childNodes[2].value, "Before");
+        this.assertEqual("radio1", f.childNodes[3].value, "Before");
+        this.assertEqual(true, f.childNodes[3].checked, "Before");
+        this.assertEqual("radio2", f.childNodes[4].value, "Before");
+        this.assertEqual("text", f.childNodes[5].value, "Before");
+        this.assertEqual("textarea", f.childNodes[6].value, "Before");
+        this.assertEqual("3", f.childNodes[7].value, "Before");
+
+        //alert(f.serialize());
+        f.getElements().invoke("clear");
+        //alert(f.serialize());
+
+        this.assertEqual("button", f.childNodes[0].value, "button");
+        this.assertEqual("checkbox", f.childNodes[1].value, "checkbox");
+        this.assertEqual(false, f.childNodes[1].checked, "checkbox");
+        this.assertEqual("", f.childNodes[2].value, "password");
+        this.assertEqual("radio1", f.childNodes[3].value, "radio 1");
+        this.assertEqual(false, f.childNodes[3].checked, "radio 1");
+        this.assertEqual("radio2", f.childNodes[4].value, "radio 2");
+        this.assertEqual(false, f.childNodes[4].checked, "radio 2");
+        this.assertEqual("", f.childNodes[5].value, "text", "Clear text input");
+        this.assertEqual("", f.childNodes[6].value, "textarea", "Clear textarea");
+        this.assertEqual("", f.childNodes[7].value, "select");
+      },
+
+      testFormSerializeDeserialize: function() {
+        var form = $("form1"), text = "text text\r\n";
+        form.reset();
+        $("textarea1").setValue("text text\n");
+        var params = form.serialize();
+        form.deserialize(params);
+        this.assertEqual(text, $F("textarea1"));
+      },
+
+      testFormDeserializeObject: function() {
+        var form = $("form1");
+        form.reset();
+        this.assertEqual(FORM1, form.deserialize({}).serialize(), "Empty object");
+        this.assertEqual(FORM2, form.deserialize({
+          password: "",
+          text: "text 1",
+          textarea: "text\r\ntext text\ntext"
+        }).serialize(), "Object");
+        this.assertEqual("text\r\ntext text\r\ntext", $F("textarea1"));
+      },
+
+      testFormDeserializeJSON: function() {
+        var form = $("form1"), source = '{}';
+        form.reset();
+        this.assertEqual(FORM1, form.deserialize(Object.fromJSON(source)).serialize(), "Empty JSON string");
+        source = '{"password":"","text":"text 1","textarea":"text\\r\\ntext text\\r\\ntext"}';
+        this.assertEqual(true, Object.isString(source), "Source is string");
+        this.assertEqual(true, source.isJSON(), "Source is JSON string");
+        this.assertEqual(FORM2, form.deserialize(Object.fromJSON(source)).serialize(), "JSON string");
+
+        //source = source.replace(/\\(?:["\\\/bfnrt]|u[0-9a-fA-F]{4})/g, '@');
+        //alert("Source 1: " + source);
+        //source = source.replace(/"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g, ']');
+        //alert("Source 2: " + source);
+        //source = source.replace(/(?:^|:|,)(?:\s*\[)+/g, '');
+        //alert("Source 3: " + source);
+      },
+
+      testFormDeserializeString: function() {
+        $("form1").reset();
+        var source = "";
+        this.assertEqual(FORM1, $("form1").deserialize(source).serialize(), "Empty query string");
+        source = "password=&text=text+1&textarea=text\r\ntext+text\r\ntext";
+        this.assertEqual(FORM2, $("form1").deserialize(source).serialize(), "Query string");
+      },
+
+      testDisableButtons: function() {
+        var i, e = $$(".enabled"), d = $$(".disabled");
+        this.assertEqual(7, e.length);
+        this.assertEqual(7, d.length);
+
+        for ( i = 0; i < e.length; ++i) {
+          this.assertIdentical(false, e[i].disabled, "Initially enabled: " + inspect(e[i]));
+        }
+        for ( i = 0; i < d.length; ++i) {
+          this.assertIdentical(true, d[i].disabled, "Initially disabled: " + inspect(d[i]));
+        }
+
+        $("form").disableButtons();
+        for ( i = 0; i < e.length; ++i) {
+          this.assertIdentical(true, e[i].disabled, "Disabled: " + inspect(e[i]));
+        }
+        for ( i = 0; i < d.length; ++i) {
+          this.assertIdentical(true, d[i].disabled, "Disabled: " + inspect(d[i]));
+        }
+
+        $("form").restoreDisabledButtons();
+        for ( i = 0; i < e.length; ++i) {
+          this.assertIdentical(false, e[i].disabled, "Finally enabled: " + inspect(e[i]));
+        }
+        for ( i = 0; i < d.length; ++i) {
+          this.assertIdentical(true, d[i].disabled, "Finally disabled: " + inspect(d[i]));
+        }
+      },
+
+      testSetDisabled: function() {
+        var selector = "input,textarea,select", inputs = $("form").select(selector), i;
+        this.assertEqual(16, inputs.length);
+        for ( i = 0; i < inputs.length; ++i) {
+          this.assertIdentical(true, !inputs[i].disabled || inputs[i].hasClassName("disabled"), "Default (enabled): " + inspect(inputs[i]));
+          //assertEqual
+        }
+
+        inputs.invoke("setDisabled");
+        for ( i = 0; i < inputs.length; ++i) {
+          this.assertIdentical(false, inputs[i].disabled, "Enabled: " + inspect(inputs[i]));
+        }
+
+        inputs.invoke("setDisabled", true);
+        for ( i = 0; i < inputs.length; ++i) {
+          this.assertIdentical(true, inputs[i].disabled, "Disabled: " + inspect(inputs[i]));
+        }
+
+        inputs.invoke("setDisabled", false);
+        for ( i = 0; i < inputs.length; ++i) {
+          this.assertIdentical(false, inputs[i].disabled, "Enabled again: " + inspect(inputs[i]));
+        }
+      },
+
+      testTextareaValue: function() {
+        var t = $("textarea1");
+        t.setValue("\na\n\nb\n");
+        this.assertEqual("\r\na\r\n\r\nb\r\n", t.getValue());
+      },
+
+      testSubmitClick: function() {
+        var form = $("form2"), submitFired = 0, len = 3;
+        form.onsubmit = function(event) {
+          event = event || window.event;
+          Event.stop(event);
+          submitFired++;
+          return false;
+        };
+
+        for (var i = 1; i <= len; i++) {
+          var id = "submit" + i, submit = $(id);
+          this.assertNotNull(submit, "Submit button #" + id);
+          //Event.simulateMouse(submit, "click");
+          submit.activate().click();
+          var data = Object.toJSON(form.retrieve("form:submit-button"));
+          this.assertEqual("{\"" + id + "\":\"" + id + "\"}", data);
+        }
+        this.assertEqual(len, submitFired, "Submit should be fired " + len + " times");
+        //form.onsubmit = null;
+      }
+    });
+  </script>
+</body>
+</html>
