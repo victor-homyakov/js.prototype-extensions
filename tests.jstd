@@ -1,0 +1,4 @@
+load:
+  - lib/prototype-1.7.js
+  - js/*.js
+  - jstestdriver/*.js
