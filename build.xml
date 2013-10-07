@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE project>
+<project name="js.prototype-extensions" basedir="." default="build">
+
+  <import file="build-minifier.xml" />
+
+  <property name="build.dir" value="./build" />
+  <property name="build.js.dir" value="${build.dir}/js" />
+
+  <property name="js.p.dir" value="${build.js.dir}" />
+  <property name="js.p.name" value="prototype-1.7" />
+  <property name="js.s.dir" value="${build.js.dir}" />
+  <property name="js.s.name" value="scriptaculous" />
+  <property name="js.ext.dir" value="${build.js.dir}" />
+  <property name="js.ext.name" value="prototype-1.7-ext" />
+
+  <target name="build" depends="build-js" description="Build JS files">
+    <echo>Done</echo>
+  </target>
+
+  <target name="build-js" depends="build-js-proto,build-js-scripty,build-js-ext"
+    description="Build JS files (concatenate and minify)">
+    <concat destfile="${build.js.dir}/proto-scripty.js">
+      <filelist dir="${js.p.dir}">
+        <file name="${js.p.name}.js" />
+      </filelist>
+      <filelist dir="${js.s.dir}">
+        <file name="${js.s.name}.js" />
+      </filelist>
+      <filelist dir="${js.ext.dir}">
+        <file name="${js.ext.name}.js" />
+      </filelist>
+    </concat>
+    <!--<gc-js dir="${build.js.dir}" src="proto-scripty" />-->
+  </target>
+
+  <target name="build-js-proto">
+    <echo>Building prototype ${js.p.name}.js</echo>
+    <copy file="./lib/${js.p.name}.js" todir="${js.p.dir}" preservelastmodified="true" />
+    <!--<gc-js dir="${js.p.dir}" src="${js.p.name}" />
+    <yc-js-all dir="${js.p.dir}" />-->
+  </target>
+
+  <target name="build-js-scripty">
+    <echo>Building scriptaculous ${js.s.name}.js</echo>
+    <copy file="./lib/${js.s.name}.js" todir="${js.s.dir}" preservelastmodified="true" />
+    <copy file="./lib/unittest.js" todir="${js.s.dir}" preservelastmodified="true" />
+    <!--<gc-js dir="${js.s.dir}" src="${js.s.name}" />
+    <yc-js dir="${js.s.dir}" src="${js.s.name}" />-->
+  </target>
+
+  <target name="build-js-ext">
+    <echo>Building prototype extensions ${js.ext.name}.js</echo>
+    <copy file="./js/include.js" todir="${js.ext.dir}" preservelastmodified="true" />
+    <concat destfile="${js.ext.dir}/${js.ext.name}.js">
+      <filelist dir="./js">
+        <file name="include.js" />
+        <file name="class.js" />
+        <file name="prototype.js" />
+        <file name="misc.js" />
+        <file name="function.js" />
+        <file name="object.js" />
+        <file name="ajax.js" />
+        <file name="element.js" />
+        <file name="element-navigation.js" />
+        <file name="element-style.js" />
+        <file name="element.image.js" />
+        <file name="form.js" />
+        <file name="form-state.js" />
+        <file name="mixin.observable.js" />
+        <file name="document.js" />
+        <file name="event.js" />
+        <file name="events-custom.js" />
+        <file name="${js.ext.name}.js" />
+      </filelist>
+      <filterchain>
+        <linecontains negate="true">
+          <contains value="/*global" />
+        </linecontains>
+      </filterchain>
+    </concat>
+    <!--<gc-js dir="${js.ext.dir}" src="${js.ext.name}" />
+    <yc-js-all dir="${js.ext.dir}" />-->
+  </target>
+</project>
