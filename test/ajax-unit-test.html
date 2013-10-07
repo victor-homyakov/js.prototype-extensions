@@ -1,0 +1,261 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>Ajax unit test</title>
+  <link type="text/css" rel="stylesheet" href="unittest.css" />
+  <script type="text/javascript" src="../lib/prototype-1.7.js"></script>
+  <script type="text/javascript" src="../js/ajax.js"></script>
+  <script type="text/javascript" src="../lib/unittest.js"></script>
+</head>
+<body>
+  <h1>Ajax unit test</h1>
+  <div id="testlog">
+    &nbsp;
+  </div>
+  <div id="updaterTarget">
+    &nbsp;
+  </div>
+  <script type="text/javascript">
+    /*global $, Ajax, Prototype, Test */
+
+    var onCreate, onAbort, on0, on200, on404, onSuccess, onFailure, onComplete;
+
+    function callback(obj, response) {
+      obj.count++;
+      obj.responseAborted = response.aborted;
+      obj.status = response.status;
+    }
+
+    new Test.Unit.Runner({
+      setup: function() {
+        onCreate = {
+          count: 0
+        };
+        onAbort = {
+          count: 0
+        };
+        on0 = {
+          count: 0
+        };
+        on200 = {
+          count: 0
+        };
+        on404 = {
+          count: 0
+        };
+        onSuccess = {
+          count: 0
+        };
+        onFailure = {
+          count: 0
+        };
+        onComplete = {
+          count: 0
+        };
+      },
+
+      teardown: function() {
+      },
+
+      testGetTransport: function() {
+        this.assertRespondsTo("getTransport", Ajax);
+        var f1 = Ajax.getTransport, transport = Ajax.getTransport();
+        this.assertRespondsTo("getTransport", Ajax);
+        var f2 = Ajax.getTransport;
+        this.assert(f2 !== f1, "getTransport should memoize successful constructor");
+        this.assert(transport !== false);
+
+        if (!Prototype.Browser.IE) {
+          this.assertRespondsTo("open", transport);
+          this.assertRespondsTo("send", transport);
+          this.assertRespondsTo("setRequestHeader", transport);
+          this.assertRespondsTo("getResponseHeader", transport);
+        }
+
+        var transport2 = Ajax.getTransport(), f3 = Ajax.getTransport;
+        this.assert(f2 === f3, "getTransport should memoize successful constructor");
+        this.assert(transport !== transport2);
+      },
+
+      testAbortRequest: function() {
+        var request = new Ajax.Request("ajax-unit-test-fragment.html", {
+          method: "get", // Aptana 3.2 embedded server doesn't support POST
+          onCreate: callback.curry(onCreate),
+          onAbort: callback.curry(onAbort),
+          onComplete: callback.curry(onComplete)
+        });
+        request.abort();
+        debugger;
+        this.wait(100, function() {
+          this.assertTrue(request.aborted, "aborted should be true");
+          //this.assertFalse(request.success(), "success() should be false");
+
+          this.assertEqual(1, onCreate.count, "onCreate");
+          this.assertFalse(onCreate.responseAborted, "response should not be aborted in onCreate");
+          this.assertEqual(0, onCreate.status, "response status in onCreate");
+
+          this.assertEqual(1, onAbort.count, "onAbort");
+          this.assertTrue(onAbort.responseAborted, "response should be aborted in onAbort");
+          this.assertEqual(0, onAbort.status, "response status in onAbort");
+
+          this.assertEqual(1, onComplete.count, "onComplete");
+          this.assertTrue(onComplete.responseAborted, "response should be aborted in onComplete");
+          this.assertEqual(0, onComplete.status, "response status in onComplete");
+        });
+      },
+
+      testAbortUpdater: function() {
+        function callback(obj, response) {
+          obj.count++;
+          obj.responseAborted = response.aborted;
+          obj.status = response.status;
+          obj.loading = $("updaterTarget").hasClassName("loading");
+        }
+
+        var request = new Ajax.Updater("updaterTarget", "ajax-unit-test-fragment.html", {
+          method: "get",
+          evalScripts: false,
+          onCreate: callback.curry(onCreate),
+          onAbort: callback.curry(onAbort),
+          onComplete: callback.curry(onComplete)
+        });
+        request.abort();
+
+        this.wait(100, function() {
+          this.assertTrue(request.aborted, "aborted should be true");
+
+          this.assertEqual(1, onCreate.count, "onCreate");
+          this.assertFalse(onCreate.responseAborted, "response should not be aborted in onCreate");
+          this.assertTrue(onCreate.loading, "loading indicator in onCreate");
+          this.assertEqual(0, onCreate.status, "response status in onCreate");
+
+          this.assertEqual(1, onAbort.count, "onAbort");
+          this.assertTrue(onAbort.responseAborted, "response should be aborted in onAbort");
+          this.assertTrue(onAbort.loading, "loading indicator in onAbort");
+          this.assertEqual(0, onAbort.status, "response status in onAbort");
+
+          this.assertEqual(1, onComplete.count, "onComplete");
+          this.assertTrue(onComplete.responseAborted, "response should be aborted in onComplete");
+          this.assertFalse(onComplete.loading, "loading indicator in onComplete");
+          this.assertEqual(0, onComplete.status, "response status in onComplete");
+        });
+      },
+
+      testUpdaterBadOptions: function() {
+        var request = new Ajax.Updater("updaterTarget", "ajax-unit-test-fragment.html", {
+          method: "get",
+          onCreate: undefined,
+          onAbort: undefined,
+          onComplete: undefined
+        });
+        this.wait(100, function() {
+          this.assertElement("updatedSuccessfully", "Updater should not fail on bad callbacks");
+        });
+      },
+
+      testUpdaterTime: function() {
+        var time1 = new Date().getTime();
+        var request = new Ajax.Updater("updaterTarget", "ajax-unit-test-fragment.html", {
+          method: "get"
+        });
+        var time2 = new Date().getTime();
+        this.assert(request.createdTime >= time1, "Request creation time " + request.createdTime + " should be >= " + time1);
+        this.assert(request.createdTime <= time2, "Request creation time " + request.createdTime + " should be <= " + time2);
+        this.wait(100, function() {
+          this.assertEqual($("updaterTarget").retrieve("ajax_updater_time"), request.createdTime, "Updater time");
+        });
+      },
+
+      /*
+      testRequestOn0: function() {
+        var request = new Ajax.Request("http://www.nonexistent.com/nonexistent.html", {
+          method: "get", // Aptana 3.2 embedded server doesn't support POST
+          on0: callback.curry(on0),
+          on200: callback.curry(on200),
+          on404: callback.curry(on404),
+          onSuccess: callback.curry(onSuccess),
+          onFailure: callback.curry(onFailure),
+          onComplete: callback.curry(onComplete)
+        });
+
+        this.wait(100, function() {
+          this.assertEqual(1, on0.count, "on0");
+          this.assertEqual(0, on0.status, "response status in on0");
+
+          this.assertEqual(0, on200.count, "on200");
+
+          this.assertEqual(0, on404.count, "on404");
+
+          this.assertEqual(0, onSuccess.count, "onSuccess");
+
+          this.assertEqual(0, onFailure.count, "onFailure");
+          this.assertEqual(0, onFailure.status, "response status in onFailure");
+
+          this.assertEqual(1, onComplete.count, "onComplete");
+          this.assertEqual(0, onComplete.status, "response status in onComplete");
+        });
+      },
+      */
+
+      testRequestOn200: function() {
+        var request = new Ajax.Request("ajax-unit-test-fragment.html", {
+          method: "get", // Aptana 3.2 embedded server doesn't support POST
+          on0: callback.curry(on0),
+          on200: callback.curry(on200),
+          on404: callback.curry(on404),
+          onSuccess: callback.curry(onSuccess),
+          onFailure: callback.curry(onFailure),
+          onComplete: callback.curry(onComplete)
+        });
+
+        this.wait(100, function() {
+          this.assertEqual(0, on0.count, "on0");
+
+          this.assertEqual(1, on200.count, "on200");
+          this.assertEqual(200, on200.status, "response status in on200");
+
+          this.assertEqual(0, on404.count, "on404");
+
+          this.assertEqual(1, onSuccess.count, "onSuccess");
+          this.assertEqual(200, onSuccess.status, "response status in onSuccess");
+
+          this.assertEqual(0, onFailure.count, "onFailure");
+
+          this.assertEqual(1, onComplete.count, "onComplete");
+          this.assertEqual(200, onComplete.status, "response status in onComplete");
+        });
+      },
+
+      testRequestOn404: function() {
+        var request = new Ajax.Request("ajax-unit-test-fragment-nonexistent.html", {
+          method: "get", // Aptana 3.2 embedded server doesn't support POST
+          on0: callback.curry(on0),
+          on200: callback.curry(on200),
+          on404: callback.curry(on404),
+          onSuccess: callback.curry(onSuccess),
+          onFailure: callback.curry(onFailure),
+          onComplete: callback.curry(onComplete)
+        });
+
+        this.wait(100, function() {
+          this.assertEqual(0, on0.count, "on0");
+
+          this.assertEqual(0, on200.count, "on0");
+
+          this.assertEqual(1, on404.count, "on404");
+          this.assertEqual(404, on404.status, "response status in on404");
+
+          this.assertEqual(0, onSuccess.count, "onSuccess");
+
+          this.assertEqual(1, onFailure.count, "onFailure");
+          this.assertEqual(404, onFailure.status, "response status in onFailure");
+
+          this.assertEqual(1, onComplete.count, "onComplete");
+          this.assertEqual(404, onComplete.status, "response status in onComplete");
+        });
+      }
+    });
+  </script>
+</body>
+</html>
