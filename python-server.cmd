@@ -1,2 +1,2 @@
-#!/bin/sh
+@echo off
 python -m http.server
