@@ -1,0 +1,16 @@
+TestCase("DomExample", {
+  setUp: function() {
+    //console.log("setUp: this=", this);
+  },
+  testFoo1: function() {
+    // html fixture scoped to a test:
+    assertUndefined(this.foo);
+    /*:DOC foo = <div><p>foo</p></div>*/
+    assertNotUndefined(this.foo);
+  },
+  testFoo2: function() {
+    // html fixture appended to the body (js-test-driver accepts only ONE top-level node):
+    /*:DOC += <div id="foo"></div> */
+    assertNotNull(document.getElementById('foo'));
+  }
+});
