@@ -86,7 +86,7 @@
           onComplete: callback.curry(onComplete)
         });
         request.abort();
-        debugger;
+
         this.wait(100, function() {
           this.assertTrue(request.aborted, "aborted should be true");
           //this.assertFalse(request.success(), "success() should be false");
