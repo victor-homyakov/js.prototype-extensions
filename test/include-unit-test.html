@@ -1,0 +1,112 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Include unit test</title>
+    <link type="text/css" rel="stylesheet" href="unittest.css" />
+    <script type="text/javascript" src="../lib/prototype-1.7.js"></script>
+    <script type="text/javascript" src="../js/include.js"></script>
+    <!--<script type="text/javascript" src="../lib/stacktrace.js"></script>-->
+    <script type="text/javascript" src="../lib/unittest.js"></script>
+  </head>
+  <body>
+    <h1>Include unit test</h1>
+    <!-- Log output -->
+    <div id="testlog"> </div>
+    <span class="testclass1">Include.cssUrl() (should be red on green)</span>
+    <span class="testclass2">Include.cssText() (should be white on black)</span>
+    <br/>
+    <!-- Tests -->
+    <script type="text/javascript">
+      new Test.Unit.Runner({
+        setup: function() {
+        },
+        teardown: function() {
+        },
+
+        testDefault: function() {
+          this.assertInstanceOf(Object, Include);
+          this.assert(Object.isFunction(Include));
+          this.assert(Object.isFunction(Include.css));
+          this.assert(Object.isFunction(Include.js));
+        },
+
+        testHead: function() {
+          this.assert(Include.head());
+          this.assertEqual("HEAD", Include.head().nodeName);
+        },
+
+        testFindCSS: function() {
+          this.assert(Include.findcss("unittest.css"), "Find unittest.css");
+          this.assert(!Include.findcss("non-existent.css"), "Find non existent css");
+        },
+
+        testFindJS: function() {
+          this.assert(Include.findjs("../lib/unittest.js"), "Find unittest.js");
+          this.assert(!Include.findjs("non-existent.js"), "Find non existent js");
+        },
+
+        testIsCssText: function() {
+          this.assert(!Include.isCssText(""), "Empty string");
+          this.assert(!Include.isCssText("localhost"), "URL 1");
+          this.assert(!Include.isCssText("http://www.example.com:8080/index.html"), "URL 2");
+          this.assert(Include.isCssText("* {color: red; background: black;}"), "CSS 1");
+          this.assert(Include.isCssText("* {\n  color: red;\n  background: black;\n}\n"), "CSS 2");
+        },
+
+        testIncludePresentCSS: function() {
+          // FIXME false pass this.assert(Include.css("non-existent.css"), "Already present CSS");
+          this.assert(Include.css("unittest.css"), "Already present CSS");
+        },
+
+        testIncludeCSSUrl: function() {
+          // TODO check for non-existent CSS
+          var url = "include-unit-test.css";
+          //this.assert(!Include.findcss(url), "Not present CSS");
+          var css = Include.css(url);
+          this.assert(css, "Include CSS");
+          this.assert(Include.findcss(url), "Present included CSS");
+          this.assertEqual("stylesheet", $(css).readAttribute("rel"));
+          this.assertEqual("text/css", $(css).readAttribute("type"));
+          this.assertEqual(url, $(css).readAttribute("href"));
+          this.assertEqual("HEAD", css.parentNode.nodeName, "CSS included in head");
+          //Element.remove(Include.findcss(url));
+          //this.assert(!Include.findcss(url), "Removed CSS");
+        },
+
+        testIncludeCSSText: function() {
+          var css = Include.css(".testclass2 {color:white; background:black;}");
+          this.assertEqual("text/css", $(css).readAttribute("type"));
+          this.assertEqual("HEAD", css.parentNode.nodeName, "CSS included in head");
+        },
+
+        testIncludePresentJS: function() {
+          var fired = 0;
+          this.assert(Include.js("../js/include.js", function callback() {
+            fired++;
+          }), "Already present JS");
+          this.assert(fired == 1, "Callback fired on JS if already loaded");
+        },
+
+        testIncludeJS: function() {
+          var url = "include-unit-test.js", fired = 0;
+          var js = Include.js(url, function callback() {
+            fired++;
+            //alert("2: " + fired);
+            //alert(printStackTrace());
+            includedFunction();
+            //WaitWindow.alert("Dynamic loading of JavaScript", null, 1000);
+            //alert("2 end: " + fired);
+          });
+          this.assert(js, "Include JS");
+          this.assert(Include.findjs(url), "Present included JS");
+          this.assert("text/javascript", $(js).readAttribute("type"));
+          this.assert(url, $(js).readAttribute("src"));
+          this.wait(1000, function() {
+            this.assert(fired == 1, "Callback is fired " + fired + " times, but should be 1");
+          });
+        }
+      });
+    </script>
+  </body>
+</html>
