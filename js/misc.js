@@ -89,12 +89,13 @@ Date.isLeapYear = function(year) {
 
 /**
  * Simplify usage of generic slice on array-like objects.
+ * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/slice#Array.slice
  *
  * @param {Array|Arguments|NodeList} array - array-like object (usually Arguments or NodeList)
  * @param {Number} [begin=0] - start index (inclusive)
  * @param {Number} [end=array.length] - end index (exclusive)
  * @return {Array} Array which contains items of original object
  */
-Array.slice = function(array, begin, end) {
+Array.slice = Array.slice || function(array, begin, end) {
   return Array.prototype.slice.call(array, begin || 0, end || array.length);
 };

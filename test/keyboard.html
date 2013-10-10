@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Keyboard Event Handler Lab</title>
+    <style type="text/css">
+      table {
+        border: 0;
+        border-collapse: separate;
+      }
+      td {
+        text-align: center;
+        padding: 2px;
+        border: 1px solid #666;
+      }
+    </style>
+    <script type="text/javascript">
+      function setBgColor(id, color) {
+        document.getElementById(id).style.backgroundColor = color;
+      }
+
+      function setText(id, text) {
+        document.getElementById(id).innerHTML = text;
+      }
+
+      function restoreModifiers(ext) {
+        setBgColor("shift" + ext, "#ffffff");
+        setBgColor("ctrl" + ext, "#ffffff");
+        setBgColor("alt" + ext, "#ffffff");
+      }
+
+      function showModifiers(ext, evt) {
+        setBgColor("shift" + ext, evt.shiftKey ? "#ff0000" : "#ffffff");
+        setBgColor("ctrl" + ext, evt.ctrlKey ? "#00ff00" : "#ffffff");
+        setBgColor("alt" + ext, evt.altKey ? "#0000ff" : "#ffffff");
+      }
+
+      function clearKeys() {
+        var s = "&nbsp;";
+        setText("downKeyCode", s);
+        setText("downCharCode", s);
+        setText("downWhich", s);
+        setText("pressKeyCode", s);
+        setText("pressCharCode", s);
+        setText("pressWhich", s);
+        setText("upKeyCode", s);
+        setText("upCharCode", s);
+        setText("upWhich", s);
+      }
+
+      function showKeyDown(evt) {
+        evt = evt || window.event;
+        clearKeys();
+        restoreModifiers("");
+        restoreModifiers("Down");
+        restoreModifiers("Up");
+        setText("downKeyCode", evt.keyCode);
+        setText("downCharCode", evt.charCode);
+        setText("downWhich", evt.which);
+        showModifiers("Down", evt);
+      }
+
+      function showKeyPress(evt) {
+        evt = evt || window.event;
+        //clearKeys();
+        setText("pressKeyCode", evt.keyCode);
+        setText("pressCharCode", evt.charCode);
+        setText("pressWhich", evt.which);
+        showModifiers("", evt);
+        return false;
+      }
+
+      function showKeyUp(evt) {
+        evt = evt || window.event;
+        //clearKeys();
+        setText("upKeyCode", evt.keyCode);
+        setText("upCharCode", evt.charCode);
+        setText("upWhich", evt.which);
+        showModifiers("Up", evt);
+        return false;
+      }
+
+      function init() {
+        document.onkeydown = showKeyDown;
+        document.onkeypress = showKeyPress;
+        document.onkeyup = showKeyUp;
+      }
+    </script>
+  </head>
+  <body onload="init();">
+    <h1>Keyboard Event Handler Lab</h1>
+    <hr />
+    <form action="#">
+      <table>
+        <tr>
+          <th>&nbsp;</th>
+          <th>onKeyDown</th>
+          <th>onKeyPress</th>
+          <th>onKeyUp</th>
+        </tr>
+        <tr>
+          <th>Key Code</th>
+          <td id="downKeyCode">&nbsp;</td>
+          <td id="pressKeyCode">&nbsp;</td>
+          <td id="upKeyCode">&nbsp;</td>
+        </tr>
+        <tr>
+          <th>Char Code (Firefox)</th>
+          <td id="downCharCode">&nbsp;</td>
+          <td id="pressCharCode">&nbsp;</td>
+          <td id="upCharCode">&nbsp;</td>
+        </tr>
+        <tr>
+          <th>Which Code (Opera)</th>
+          <td id="downWhich">&nbsp;</td>
+          <td id="pressWhich">&nbsp;</td>
+          <td id="upWhich">&nbsp;</td>
+        </tr>
+        <tr>
+          <th rowspan="3">Modifier Keys</th>
+          <td>
+            <span id="shiftDown">Shift</span>
+          </td>
+          <td>
+            <span id="shift">Shift</span>
+          </td>
+          <td>
+            <span id="shiftUp">Shift</span>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <span id="ctrlDown">Ctrl</span>
+          </td>
+          <td>
+            <span id="ctrl">Ctrl</span>
+          </td>
+          <td>
+            <span id="ctrlUp">Ctrl</span>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <span id="altDown">Alt</span>
+          </td>
+          <td>
+            <span id="alt">Alt</span>
+          </td>
+          <td>
+            <span id="altUp">Alt</span>
+          </td>
+        </tr>
+      </table>
+    </form>
+  </body>
+</html>
