@@ -1,0 +1,76 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Object extensions unit test</title>
+    <link type="text/css" rel="stylesheet" href="unittest.css" />
+    <script type="text/javascript" src="../lib/prototype-1.7.js"></script>
+    <script type="text/javascript" src="../js/object.js"></script>
+    <script type="text/javascript" src="../js/prototype-1.7-ext.js"></script>
+    <script type="text/javascript" src="../lib/unittest.js"></script>
+  </head>
+  <body>
+    <h1>Object extensions unit test</h1>
+    <!-- Log output -->
+    <div id="testlog"> </div>
+    <br/>
+    <!-- Tests -->
+    <script type="text/javascript">
+      new Test.Unit.Runner({
+        testIsBoolean: function() {
+          this.assertEqual(true, Object.isBoolean(true));
+          this.assertEqual(true, Object.isBoolean(false));
+
+          var b = true;
+          this.assertEqual(true, Object.isBoolean(b));
+
+          this.assertEqual(true, Object.isBoolean((function() {
+            return true;
+          })()));
+          this.assertEqual(true, Object.isBoolean((function() {
+            return false;
+          })()));
+
+          this.assertEqual(true, Object.isBoolean(Boolean(0)), "isBoolean(Boolean(0))");
+          this.assertEqual(true, Object.isBoolean(new Boolean()), "isBoolean(new Boolean())");
+          this.assertEqual(false, Object.isBoolean(new Date()), "isBoolean(new Date())");
+          this.assertEqual(false, Object.isBoolean({}), "isBoolean({})");
+        },
+
+        testIsDate: function() {
+          this.assertEqual(true, Object.isDate(new Date()));
+          this.assertEqual(true, Object.isDate(new Date(0)));
+        },
+
+        testIsObject: function() {
+          this.assertEqual(true, Object.isObject(null));
+          this.assertEqual(true, Object.isObject({}));
+          this.assertEqual(true, Object.isObject(new Date()));
+        },
+
+        testFromJSON: function() {
+          var o, p, l;
+
+          this.assertNull(Object.fromJSON("null"));
+          this.assertEqual(true, Object.fromJSON('{"test":true}').test);
+          this.assertEqual("test&test", Object.fromJSON("{&quot;test&quot;:&quot;test&amp;test&quot;}").test);
+
+          o = Object.fromJSON("{}");
+          l = 0;
+          for (p in o) {
+            l++;
+          }
+          this.assertEqual(0, l);
+
+          o = Object.fromJSON("{\"s\":\"s\"}");
+          l = 0;
+          for (p in o) {
+            l++;
+          }
+          this.assertEqual(1, l);
+          this.assertEqual("s", o.s);
+        }
+      });
+    </script>
+  </body>
+</html>
