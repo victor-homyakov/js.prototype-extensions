@@ -1,0 +1,197 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>JSONP unit test</title>
+    <link type="text/css" rel="stylesheet" href="unittest.css" />
+    <script type="text/javascript" src="../lib/prototype-1.7.js"></script>
+    <script type="text/javascript" src="../sandbox/jsonp/ajax.jsonp.js"></script>
+    <script type="text/javascript" src="../lib/unittest.js"></script>
+  </head>
+  <body>
+    <h1>JSONP unit test</h1>
+    <div id="testlog"> </div>
+    <script type="text/javascript">
+      var failed, succeeded, completed;
+      var failedBeforeCallback, succeededBeforeCallback, completedBeforeCallback;
+      var callbackCalled, callbackResult, callbackOld = window.callback;
+
+      function onFailure() {
+        failed++;
+      }
+
+      function onSuccess() {
+        succeeded++;
+      }
+
+      function onComplete() {
+        completed++;
+      }
+
+
+      function jsonp(url, options) {
+        var o = Object.extend({
+          onFailure: onFailure,
+          onSuccess: onSuccess,
+          onComplete: onComplete
+        }, options || {});
+        new Ajax.JSONP(url, o);
+      }
+
+
+      new Test.Unit.Runner({
+        setup: function() {
+          failed = 0;
+          succeeded = 0;
+          completed = 0;
+
+          failedBeforeCallback = 0;
+          succeededBeforeCallback = 0;
+          completedBeforeCallback = 0;
+
+          callbackCalled = 0;
+          window.callback = function(jsonp) {
+            callbackCalled++;
+            callbackResult = jsonp;
+
+            failedBeforeCallback = failed;
+            succeededBeforeCallback = succeeded;
+            completedBeforeCallback = completed;
+          };
+        },
+
+        teardown: function() {
+          window.callback = callbackOld;
+        },
+
+        testNoArgs: function() {
+          new Ajax.JSONP();
+          var js = $("jsonp-" + Ajax.JSONP.counter);
+          this.assertNotNull(js);
+          this.assertEqual("script", js.tagName.toLowerCase());
+        },
+
+        // FIXME IE
+        testNonExistentJsonpCallbacks: function() {
+          jsonp("non-existent.jsonp");
+          this.wait(100, function() {
+            this.assertEqual(1, failed, "onFailure");
+            this.assertEqual(0, succeeded, "onSuccess");
+            this.assertEqual(1, completed, "onComplete");
+            this.assertEqual(0, callbackCalled, "callback not called");
+
+            // onFailure/onSuccess/onComplete fired after callback
+            this.assertEqual(0, failedBeforeCallback, "onFailure");
+            this.assertEqual(0, succeededBeforeCallback, "onSuccess");
+            this.assertEqual(0, completedBeforeCallback, "onComplete");
+          });
+        },
+
+        testExistentJsonpCallbacks: function() {
+          jsonp("ajax-jsonp-utf8.jsonp");
+          this.wait(100, function() {
+            this.assertEqual(0, failed, "onFailure");
+            this.assertEqual(1, succeeded, "onSuccess");
+            this.assertEqual(1, completed, "onComplete");
+            this.assertEqual(1, callbackCalled, "callback called");
+
+            // onFailure/onSuccess/onComplete fired after callback
+            this.assertEqual(0, failedBeforeCallback, "onFailure");
+            this.assertEqual(0, succeededBeforeCallback, "onSuccess");
+            this.assertEqual(0, completedBeforeCallback, "onComplete");
+          });
+        },
+
+        // FIXME Opera, IE
+        testEncoding: function() {
+          jsonp("ajax-jsonp-utf8.jsonp");
+          this.wait(100, function() {
+            this.assertEqual("Использована кодировка UTF-8", callbackResult, "default charset (utf-8)");
+
+            jsonp("ajax-jsonp-cp1251.jsonp", {
+              encoding: "windows-1251"
+            });
+            this.wait(100, function() {
+              this.assertEqual("Использована кодировка Cp1251", callbackResult, "custom charset (windows-1251)");
+
+              jsonp("ajax-jsonp-utf8.jsonp");
+              this.wait(100, function() {
+                this.assertEqual("Использована кодировка UTF-8", callbackResult, "restored default charset (utf-8)");
+
+                jsonp("ajax-jsonp-cp1251.jsonp", {
+                  encoding: "Cp1251"
+                });
+                this.wait(100, function() {
+                  this.assertEqual("Использована кодировка Cp1251", callbackResult, "wrong charset (Cp1251)");
+                });
+              });
+            });
+          });
+        },
+
+        // FIXME Opera
+        testMalformed: function() {
+          jsonp("ajax-jsonp-malformed.jsonp");
+          this.wait(100, function() {
+            this.assertEqual(0, failed, "onFailure");
+            this.assertEqual(1, succeeded, "onSuccess");
+            this.assertEqual(1, completed, "onComplete");
+            this.assertEqual(0, callbackCalled, "callback called");
+          });
+        },
+
+        testParameters: function() {
+          function params() {
+            return $("jsonp-" + Ajax.JSONP.counter).src.split("?")[1];
+          }
+
+          jsonp("ajax-jsonp-utf8.jsonp", {
+            parameters: ""
+          });
+          this.wait(100, function() {
+            this.assertEqual(undefined, params());
+
+            jsonp("ajax-jsonp-utf8.jsonp", {
+              parameters: "a=1&b"
+            });
+            this.wait(100, function() {
+              this.assertEqual("a=1&b", params());
+
+              jsonp("ajax-jsonp-utf8.jsonp", {
+                parameters: {
+                  a: "a",
+                  b: 0
+                },
+                callbackParam: "jsonp",
+                callback: "process"
+              });
+              this.wait(100, function() {
+                this.assertEqual("a=a&b=0&jsonp=process", params());
+              });
+            });
+          });
+        },
+
+        testConcurrentLoad: function() {
+          var s = 0, c = 0;
+          jsonp("ajax-jsonp-utf8.jsonp");
+          jsonp("ajax-jsonp-utf8.jsonp", {
+            onSuccess: function() {
+              s++;
+            },
+            onComplete: function() {
+              c++;
+            }
+          });
+          this.wait(100, function() {
+            this.assertEqual(1, succeeded, "onSuccess");
+            this.assertEqual(1, completed, "onComplete");
+            this.assertEqual(1, s, "onSuccess other");
+            this.assertEqual(1, c, "onComplete other");
+            this.assertEqual(2, callbackCalled, "callback called");
+          });
+        }
+      });
+    </script>
+  </body>
+</html>
