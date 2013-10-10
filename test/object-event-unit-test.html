@@ -1,0 +1,129 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Object events unit test</title>
+    <link type="text/css" rel="stylesheet" href="unittest.css" />
+    <script type="text/javascript" src="../lib/prototype-1.7.js"></script>
+    <script type="text/javascript" src="../sandbox/object.event.js"></script>
+    <script type="text/javascript" src="../lib/unittest.js"></script>
+  </head>
+  <body>
+    <h1>Object events unit test</h1>
+    <!-- Log output -->
+    <div id="testlog"> </div>
+    <br/>
+    <!-- Tests -->
+    <script type="text/javascript">
+      new Test.Unit.Runner({
+        testInterface: function() {
+          this.assert(Object.Event);
+          this.assertFunction(Object.Event.extend);
+        },
+
+        testExtendObject: function() {
+          var o = {};
+          Object.Event.extend(o);
+          this.assertFunction(o.stopObserving);
+          this.assertFunction(o.observe);
+          this.assertFunction(o.observeOnce);
+          this.assertFunction(o.notify);
+        },
+
+        testExtendClass: function() {
+          var C = Class.create();
+          Object.Event.extend(C);
+          this.assertFunction(C.stopObserving);
+          this.assertFunction(C.observe);
+          this.assertFunction(C.observeOnce);
+          this.assertFunction(C.notify);
+
+          var c = new C();
+          this.assertFunction(c.stopObserving);
+          this.assertFunction(c.observe);
+          this.assertFunction(c.observeOnce);
+          this.assertFunction(c.notify);
+        },
+
+        testNotifyObject: function() {
+          var staticCalled = 0, observeCalled = 0, observeOnceCalled = 0;
+          var o = {
+            someEvent: function() {
+              staticCalled++;
+            }
+          };
+          Object.Event.extend(o);
+          o.observe("someEvent", function() {
+            observeCalled++;
+          });
+          o.observeOnce("someEvent", function() {
+            observeOnceCalled++;
+          });
+          o.notify("someEvent");
+          this.assertEqual(1, staticCalled, "o.someEvent");
+          this.assertEqual(1, observeCalled, "o.observe");
+          this.assertEqual(1, observeOnceCalled, "o.observeOnce");
+          o.notify("someEvent");
+          this.assertEqual(2, staticCalled, "o.someEvent");
+          this.assertEqual(2, observeCalled, "o.observe");
+          this.assertEqual(1, observeOnceCalled, "o.observeOnce");
+        },
+
+        testNotifyClass: function() {
+          var staticCalled = 0, staticObserveCalled = 0, staticObserveOnceCalled = 0;
+          var methodCalled = 0, observeCalled = 0, observeOnceCalled = 0, optionsCalled = 0;
+
+          var C = Class.create({
+            initialize: function(options) {
+              this.options = options || {};
+            },
+            someEvent: function() {
+              methodCalled++;
+            }
+          });
+          Object.Event.extend(C);
+
+          C.someEvent = function() {
+            staticCalled++;
+          };
+          C.observe("someEvent", function() {
+            staticObserveCalled++;
+          });
+          C.observeOnce("someEvent", function() {
+            staticObserveOnceCalled++;
+          });
+
+          var c = new C({
+            someEvent: function() {
+              optionsCalled++;
+            }
+          });
+          c.observe("someEvent", function() {
+            observeCalled++;
+          });
+          c.observeOnce("someEvent", function() {
+            observeOnceCalled++;
+          });
+
+          c.notify("someEvent");
+          this.assertEqual(1, staticCalled, "static");
+          this.assertEqual(1, staticObserveCalled, "staticObserve");
+          this.assertEqual(1, staticObserveOnceCalled, "staticObserveOnce");
+          this.assertEqual(1, methodCalled, "method");
+          this.assertEqual(1, observeCalled, "observe");
+          this.assertEqual(1, observeOnceCalled, "observeOnce");
+          this.assertEqual(1, optionsCalled, "options");
+
+          c.notify("someEvent");
+          this.assertEqual(2, staticCalled, "static");
+          this.assertEqual(2, staticObserveCalled, "staticObserve");
+          this.assertEqual(1, staticObserveOnceCalled, "staticObserveOnce");
+          this.assertEqual(2, methodCalled, "method");
+          this.assertEqual(2, observeCalled, "observe");
+          this.assertEqual(1, observeOnceCalled, "observeOnce");
+          this.assertEqual(2, optionsCalled, "options");
+        }
+      });
+    </script>
+  </body>
+</html>
