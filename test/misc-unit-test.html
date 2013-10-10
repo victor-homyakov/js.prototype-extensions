@@ -1,0 +1,223 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Math, Number, String extensions unit test</title>
+    <link type="text/css" rel="stylesheet" href="unittest.css" />
+    <script type="text/javascript" src="../lib/prototype-1.7.js"></script>
+    <script type="text/javascript" src="../js/prototype.js"></script>
+    <script type="text/javascript" src="../js/misc.js"></script>
+    <script type="text/javascript" src="../js/object.js"></script>
+    <script type="text/javascript" src="../js/prototype-1.7-ext.js"></script>
+    <script type="text/javascript" src="../lib/unittest.js"></script>
+  </head>
+  <body>
+    <h1>Math, Number, String extensions unit test</h1>
+    <!-- Log output -->
+    <div id="testlog"> </div>
+    <br/>
+    <!-- Tests -->
+    <script type="text/javascript">
+      /*
+       function digitCompare(user, edge) {
+       return (~ ~ user || 0) >= (edge || 0);
+       }
+       function versionCompare(userVersion, edgeVersion) {
+       if (userVersion === undefined) {
+       return true;
+       }
+       userVersion = userVersion.split('.');
+       var major = digitCompare(userVersion[0], edgeVersion[0]);
+       var minor = digitCompare(userVersion[1], edgeVersion[1]);
+       var build = digitCompare(userVersion[2], edgeVersion[2]);
+       return (!major || major && !minor || major && minor && !build);
+       }
+       function versionCompareOld(userVersion, edgeVersion) {
+       if (userVersion === undefined)
+       return true;
+       userVersion = userVersion.split('.');
+       var major = ~ ~ userVersion[0] >= edgeVersion[0], minor = userVersion[1] ? (~ ~ userVersion[1] >= edgeVersion[1]) : true, build = userVersion[2] ? (~ ~ userVersion[2] >= edgeVersion[2]) : true;
+       return (!major || major && !minor || major && minor && !build);
+       }
+       */
+      new Test.Unit.Runner({
+        /*testVersionCompareMajor: function() {
+         this.assertEqual(false, versionCompare("1", [1]), "1 < 1");
+         this.assertEqual(false, versionCompare("2", [1]), "2 < 1");
+         this.assertEqual(true, versionCompare("1", [2]), "1 < 2");
+         },
+         testVersionCompareMinor: function() {
+         this.assertEqual(false, versionCompare("1.1", [1, 1]), "1.1 < 1.1");
+         this.assertEqual(false, versionCompare("1.2", [1, 1]), "1.2 < 1.1");
+         this.assertEqual(true, versionCompare("1.1", [1, 2]), "1.1 < 1.2");
+         },
+         testVersionCompareBuild: function() {
+         this.assertEqual(false, versionCompare("1.1.1", [1, 1, 1]), "1.1.1 < 1.1.1");
+         this.assertEqual(false, versionCompare("1.1.2", [1, 1, 1]), "1.1.2 < 1.1.1");
+         this.assertEqual(true, versionCompare("1.1.1", [1, 1, 2]), "1.1.1 < 1.1.2");
+         },
+         testVersionCompare: function() {
+         this.assertEqual(false, versionCompare("1.7", [1, 7]), "1.7 < 1.7");
+         this.assertEqual(false, versionCompare("1.7.1", [1, 7]), "1.7.1 < 1.7"); // FIXME
+         this.assertEqual(false, versionCompare("1.7.1", [1, 7, 1]), "1.7.1 < 1.7.1");
+         this.assertEqual(true, versionCompare("1.7", [2]), "1.7 < 2");
+         this.assertEqual(true, versionCompare("1.7", [2, 0]), "1.7 < 2.0");
+         this.assertEqual(true, versionCompare("1.7", [1, 7, 1]), "1.7 < 1.7.1"); // FIXME
+         this.assertEqual(true, versionCompare("1.7.1", [1, 7, 2]), "1.7.1 < 1.7.2");
+         this.assertEqual(true, versionCompare("1.6", [1, 6, 0, 2]), "1.6 < 1.6.0.2");
+         this.assertEqual(true, versionCompare("1.6", [1, 7]), "1.6 < 1.7");
+         this.assertEqual(true, versionCompare("1.6.0.2", [1, 6, 0, 3]), "1.6.0.2 < 1.6.0.3"); // FIXME
+         this.assertEqual(true, versionCompare("1.6.0.3", [1, 7]), "1.6.0.3 < 1.7");
+         },*/
+        testAppVersionIE678: function() {
+          var testIE6 = function(av, xhr) {
+            return av.indexOf("MSIE 6.0") != -1 && !xhr;
+            //return av.indexOf("MSIE 6.0") != -1 && !window.XMLHttpRequest;
+            //return (av.indexOf("MSIE 6.0") != -1) && (av.indexOf("MSIE 7.0") == -1);
+          };
+          //$("testlog").insert("navigator.appName: " + navigator.appName + " navigator.appVersion: " + navigator.appVersion);
+          var appVersionIE6 = "4.0 (compatible; MSIE 6.0; Windows NT 5.1; .NET CLR 1.1.4322; .NET CLR 2.0.50727; InfoPath.1; .NET CLR 3.0.4506.2152; .NET CLR 3.5.30729)";
+          var appVersionIE7 = "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1) ; .NET CLR 1.1.4322; .NET CLR 2.0.50727; .NET CLR 3.0.04506.30)";
+          var appVersionIE8 = "4.0 (compatible; MSIE 8.0; Windows NT 6.0; Trident/4.0; SLCC1; .NET CLR 2.0.50727; .NET CLR 1.1.4322; .NET CLR 3.5.30729; .NET CLR 3.0.30729)";
+          this.assertEqual(true, testIE6(appVersionIE6));
+          this.assertEqual(false, testIE6(appVersionIE7, window.XMLHttpRequest));
+          this.assertEqual(false, testIE6(appVersionIE8, window.XMLHttpRequest));
+          //alert("Prototype.Browser.IE6: " + Prototype.Browser.IE6);
+        },
+
+        testMathConstrain: function() {
+          var min = 1, max = 3;
+          this.assertEqual(min, Math.constrain(Number.NEGATIVE_INFINITY, min, max));
+          this.assertEqual(min, Math.constrain(Number.MIN_VALUE, min, max));
+          this.assertEqual(min, Math.constrain(-100, min, max));
+          this.assertEqual(min, Math.constrain(min, min, max));
+          this.assertEqual(2, Math.constrain(2, min, max));
+          this.assertEqual(2, Math.constrain(2, max, min));
+          this.assertEqual(max, Math.constrain(max, min, max));
+          this.assertEqual(max, Math.constrain(100, min, max));
+          this.assertEqual(max, Math.constrain(Number.MAX_VALUE, min, max));
+          this.assertEqual(max, Math.constrain(Number.POSITIVE_INFINITY, min, max));
+
+          this.assertEqual("number", typeof Math.constrain(2, min, max));
+          this.assertEqual("number", typeof Math.constrain(new Number(2), min, max));
+          this.assertEqual("number", typeof Math.constrain(Number(2), min, max));
+        },
+
+        testNumberConstrain: function() {
+          var min = 1, max = 3;
+          this.assertEqual(min, Number.NEGATIVE_INFINITY.constrain(min, max));
+          this.assertEqual(min, Number.MIN_VALUE.constrain(min, max));
+          this.assertEqual(min, (-100).constrain(min, max));
+          this.assertEqual(min, min.constrain(min, max));
+          this.assertEqual(2, (2).constrain(min, max));
+          this.assertEqual(2, (2).constrain(max, min));
+          this.assertEqual(max, max.constrain(min, max));
+          this.assertEqual(max, (100).constrain(min, max));
+          this.assertEqual(max, Number.MAX_VALUE.constrain(min, max));
+          this.assertEqual(max, Number.POSITIVE_INFINITY.constrain(min, max));
+
+          this.assertEqual("number", typeof (2).constrain(min, max), "(2).constrain(min, max)");
+          this.assertEqual("number", typeof (2).constrain(max, min), "(2).constrain(max, min)");
+          this.assertEqual("number", typeof (new Number(2)).constrain(min, max), "(new Number(2)).constrain(min, max)");
+          this.assertEqual("number", typeof (new Number(2)).constrain(max, min), "(new Number(2)).constrain(max, min)");
+          this.assertEqual("number", typeof Number(2).constrain(min, max), "Number(2).constrain(min, max)");
+          this.assertEqual("number", typeof Number(2).constrain(max, min), "Number(2).constrain(max, min)");
+        },
+
+        testMathRandom: function() {
+          var r = Math.random();
+          this.assert(r >= 0 && r < 1);
+          r = Math.random(1);
+          this.assert(r === 0 || r === 1);
+          r = Math.random(1, 2);
+          this.assert(r === 1 || r === 2);
+          r = Math.random(10, 20);
+          this.assert(r >= 10 && r <= 20);
+        },
+
+        testNumberToPx: function() {
+          this.assertEqual("0px", Number.NEGATIVE_INFINITY.toPx());
+          this.assertEqual("0px", (-10).toPx());
+          this.assertEqual("0px", (0).toPx());
+          this.assertEqual(Number.MAX_VALUE + "px", Number.MAX_VALUE.toPx());
+        },
+
+        testStringInterpretDefault: function() {
+          var tests = [{
+            x: ''
+          }, {
+            v: undefined,
+            x: ''
+          }, {
+            v: null,
+            x: ''
+          }, {
+            v: '',
+            x: ''
+          }, {
+            v: true,
+            x: 'true'
+          }, {
+            v: false,
+            x: 'false'
+          }, {
+            v: parseInt('z', 10),
+            x: 'NaN'
+          }, {
+            v: 0,
+            x: '0'
+          }, {
+            v: 1.1,
+            x: '1.1'
+          }, {
+            v: 'xxx',
+            x: 'xxx'
+          }];
+
+          for (var i = 0, len = tests.length; i < len; ++i) {
+            var test = tests[i];
+            this.assertIdentical(test.x, String.interpret(test.v));
+          }
+        },
+
+        testStringInterpret: function() {
+          var def = '<NULL>', tests = [{
+            x: def
+          }, {
+            v: undefined,
+            x: def
+          }, {
+            v: null,
+            x: def
+          }, {
+            v: '',
+            x: ''
+          }, {
+            v: 0,
+            x: '0'
+          }];
+
+          for (var i = 0, len = tests.length; i < len; ++i) {
+            var test = tests[i];
+            this.assertIdentical(test.x, String.interpret(test.v, def));
+          }
+        },
+
+        testArrayfy: function() {
+          if (!Array.fy) {
+            return;
+          }
+          var a = Array.fy(arguments), p = Array.prototype;
+          this.assert(Object.isFunction(a.push) && Object.isFunction(a.pop));
+          this.assertIdentical(a.push, p.push, "push");
+          this.assertIdentical(a.pop, p.pop, "pop");
+          this.assertIdentical(a.reduce, p.reduce, "reduce");
+          this.assertIdentical(a.reduceRight, p.reduceRight, "reduceRight");
+          var s = "test";
+          a.push(s);
+          this.assertIdentical(a.pop(), s);
+        }
+      });
+    </script>
+  </body>
+</html>
