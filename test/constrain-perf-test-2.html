@@ -1,0 +1,93 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Performance test</title>
+    <script type="text/javascript" src="../lib/prototype-1.7.js"></script>
+    <!--<script type="text/javascript" src="../lib/tablekit.js"></script>-->
+    <script type="text/javascript" src="../lib/profiler.js"></script>
+    <script type="text/javascript">
+      Math.constrain1 = function(number, min, max) {
+        return min > max ? Math.constrain1(number, max, min) : Math.min(Math.max(number, min), max);
+      };
+      Math.constrain2 = function(number, min, max) {
+        return min > max ? Math.constrain2(number, max, min) : number > max ? max : number < min ? min : number;
+      };
+      Math.constrain3 = function(number, min, max) {
+        if (min > max) {
+          return Math.constrain3(number, max, min);
+        }
+        if (number < min) {
+          number = min;
+        }
+        if (number > max) {
+          number = max;
+        }
+        return number;
+      };
+      Math.constrain4 = function(number, min, max) {
+        if (min > max) {
+          var tmp = min;
+          min = max;
+          max = tmp;
+        }
+        if (number < min) {
+          number = min;
+        }
+        if (number > max) {
+          number = max;
+        }
+        return number;
+      };
+      Math.constrain5 = function(number, min, max) {
+        if (min > max) {
+          if (number < max) {
+            number = max;
+          }
+          if (number > min) {
+            number = min;
+          }
+          return number;
+        }
+        if (number < min) {
+          number = min;
+        }
+        if (number > max) {
+          number = max;
+        }
+        return number;
+      };
+
+      Profiler.attachTo(Math);
+
+      Number.prototype.constrain = function(min, max) {
+        //return Math.constrain(this, min, max);
+        return min > max ? this.constrain(max, min) : this > max ? max : this < min ? min : parseFloat(this);
+      };
+
+
+      var min = 333, max = 666;
+      function runTest() {
+        $("results").update("<span>Working...</span>");
+        for (var i = 0; i < 1000; ++i) {
+          //Math.constrain1(i, min, max);
+          //Math.constrain2(i, min, max);
+          Math.constrain3(i, min, max);
+          Math.constrain4(i, min, max);
+          Math.constrain5(i, min, max);
+
+          /*Math.constrain1(i, max, min);
+           Math.constrain2(i, max, min);
+           Math.constrain3(i, max, min);
+           Math.constrain4(i, max, min);
+           Math.constrain5(i, max, min);*/
+        }
+        Profiler.showTimings("results");
+      }
+    </script>
+  </head>
+  <body>
+    <button onclick="runTest.defer();">Run test</button>
+    <div id="results"></div>
+  </body>
+</html>
