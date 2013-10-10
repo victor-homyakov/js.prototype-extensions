@@ -1,0 +1,63 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>IMG/CANVAS test</title>
+    <style type="text/css">
+      #ImageViewer-Image {
+        border: 1px dotted gray;
+      }
+    </style>
+    <script type="text/javascript" src="../lib/prototype-1.7.js"></script>
+    <script type="text/javascript" src="../js/element.image.js"></script>
+    <script type="text/javascript">
+      var savedZoom = 1;
+      function setRotation(angle) {
+        $("ImageViewer-Image").rotate(angle, true);
+      }
+
+      function setRotationBy(angle) {
+        $("ImageViewer-Image").rotate(angle);
+      }
+
+      function setZoom(zoom) {
+        savedZoom = zoom;
+        $("ImageViewer-Image").zoom(zoom);
+      }
+
+      function setZoomAndRotation(zoom, angle, absolute) {
+        if (savedZoom + zoom >= 0.1) {
+          savedZoom += zoom;
+        }
+        $("ImageViewer-Image").zoomAndRotate(savedZoom, angle, absolute);
+      }
+    </script>
+  </head>
+  <body>
+    <fieldset>
+      <legend>Rotate</legend>
+      <button onclick="setRotation(0);">0</button>
+      <button onclick="setRotation(90);">90</button>
+      <button onclick="setRotation(180);">180</button>
+      <button onclick="setRotation(270);">270</button>
+      <button onclick="setRotationBy(-10);">-</button>
+      <button onclick="setRotationBy(10);">+</button>
+    </fieldset>
+    <fieldset>
+      <legend>Zoom</legend>
+      <button onclick="setZoom(0.1);">x0.1</button>
+      <button onclick="setZoom(0.25);">x0.25</button>
+      <button onclick="setZoom(0.5);">x0.5</button>
+      <button onclick="setZoom(1);">x1</button>
+      <button onclick="setZoom(2);">x2</button>
+      <button onclick="setZoom(5);">x5</button>
+      <button onclick="setZoom(10);">x10</button>
+    </fieldset>
+    <fieldset>
+      <legend>Zoom and rotate</legend>
+      <button onclick="setZoomAndRotation(-0.1,-10);">-</button>
+      <button onclick="setZoomAndRotation(0.1,10);">+</button>
+    </fieldset>
+    <img id="ImageViewer-Image" src="wolf.jpg" alt="test image" />
+  </body>
+</html>

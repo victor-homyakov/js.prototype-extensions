@@ -1,0 +1,33 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Element.fitToParent functional test</title>
+    <script type="text/javascript" src="../lib/prototype-1.7.js"></script>
+    <script type="text/javascript" src="../js/element-style.js"></script>
+    <script type="text/javascript" src="../js/element.js"></script>
+    <script type="text/javascript" src="../js/prototype-1.7-ext.js"></script>
+    <script type="text/javascript">
+      function fit() {
+        $("div2").fitToParent();
+        Element.fitToParent("div4");
+        Element.fitToParent($("div6"));
+      }
+    </script>
+  </head>
+  <body>
+    <button onclick="fit();">Fit</button>
+    <div id="div1" style="width:100px; height:100px; background-color:gray; margin:10px; border:1px solid black; padding:5px 0 0 5px;">
+      div 1
+      <div id="div2" style="background-color:silver; margin:0; border:1px solid #0D0; padding:5px;">div 2</div>
+    </div>
+    <div id="div3" style="position:absolute; left:140px; top:10px; width:200px; height:200px; background-color:gray; margin:10px; border:10px solid green; padding:10px;">
+      div 3 (padding 10px)
+      <div id="div4" style="position:absolute; left:100px; top:100px; background-color:gray; margin:5px; border:5px solid #0D0; padding:5px;">div 4</div>
+    </div>
+    <div id="div5" style="position:absolute; left:400px; top:10px; width:200px; height:200px; background-color:gray; margin:10px; border:10px solid green; padding:1px;">
+      div 5 (padding 1px)
+      <div id="div6" style="position:absolute; left:100px; top:100px; background-color:gray; margin:5px; border:5px solid #0D0; padding:5px;">div 6</div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,118 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Event extensions functional test</title>
+    <link type="text/css" rel="stylesheet" href="unittest.css" />
+    <style type="text/css">
+      #log {
+        font-family: monospace;
+        font-size: 0.8em;
+        height: 8em;
+        overflow: auto;
+        border: 1px inset gray;
+      }
+    </style>
+    <script type="text/javascript" src="../lib/prototype-1.7.js"></script>
+    <!--<script type="text/javascript">
+    Selector.prototype.shouldUseSelectorsAPI = Selector.prototype.shouldUseXPath = function() {
+    return false;
+    };
+    </script>-->
+    <script type="text/javascript" src="../js/element.js"></script>
+    <script type="text/javascript" src="../js/event.js"></script>
+    <script type="text/javascript" src="../js/events-custom.js"></script>
+    <script type="text/javascript" src="../js/prototype-1.7-ext.js"></script>
+    <script type="text/javascript">
+      function element(event) {
+        return event.element().inspect().gsub("<", "&lt;");
+      }
+
+      function log(message) {
+        $("log").insert(new Date().getTime() + ": " + message).insert("\u003cbr />").scrollTop += 1000;
+      }
+
+      function clearLog() {
+        $("log").update();
+      }
+
+      function getWH(event) {
+        return event.memo ? ("memo: " + event.memo.width + "x" + event.memo.height) : ("viewport: " + document.viewport.getWidth() + "x" + document.viewport.getHeight());
+      }
+
+
+      Event.observe(window, "load", function() {
+        document.observe("focus:in", function(e) {
+          log(element(e) + " focus:in");
+        });
+        document.observe("focus:out", function(e) {
+          log(element(e) + " focus:out");
+        });
+
+        document.observe("resize:start", function(e) {
+          log("resize:start " + getWH(e));
+        });
+        document.observe("resize:continued", function(e) {
+          log("resize:continued " + getWH(e));
+        });
+        document.observe("resize:end", function(e) {
+          log("resize:end " + getWH(e));
+        });
+
+        $("form1").on("change", function(e) {
+          log(element(e) + " form.on change");
+        });
+        $("form1").observe("change", function(e) {
+          log(element(e) + " form.observe change");
+        });
+
+        document.on("submit", function(e) {
+          log(element(e) + " document.on submit");
+          alert("Form submit");
+        });
+        document.observe("submit", function(e) {
+          log(element(e) + " document.observe submit");
+          alert("Form submit");
+        });
+
+        $("alert2", "alert4").invoke("observe", "click", function(event) {
+          event.stop();
+          alert("Click on " + event.findElement().inspect());
+        });
+      });
+    </script>
+  </head>
+  <body>
+    <h1>Event extensions functional test</h1>
+    <form action="" id="form1">
+      <input name="name1" />
+      <br/>
+      <select id="select1">
+        <option>option 1</option>
+        <option>option 2</option>
+        <option>option 3</option>
+        <option>option 4</option>
+        <option>option 5</option>
+      </select>
+      <button type="button" onclick="$('select1').focus();">Focus</button>
+      <br/>
+      <input name="name2" />
+      <br/>
+      <input type="submit" value="Submit 1" name="s1" />
+      <button type="submit" name="s2">Submit 2</button>
+      <button name="s3">Submit 3</button>
+      <br/>
+      <button type="reset">Reset</button>
+    </form>
+
+    <button id="alert1" onclick="alert('Click on button (inline event)');">Button</button>
+    <button id="alert2">Button</button>
+    <a id="alert3" onclick="alert('Click on link (inline event)'); return false;">Link</a>
+    <a id="alert4">Link</a>
+    <button onclick="Element.click('alert1'); Element.click('alert2');">Invoke click on buttons</button>
+    <button onclick="Element.click('alert3'); Element.click('alert4');">Invoke click on links</button>
+
+    <div id="log">&nbsp;</div>
+    <button onclick="clearLog();">Clear messages</button>
+  </body>
+</html>
